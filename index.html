@@ -504,20 +504,27 @@ footer p {
 <script>
 
 function searchProduct() {
-
     const input =
         document.getElementById("productSearch").value.trim();
 
     if (input === "") {
-
-        alert("Please enter a product name or URL.");
-
+        alert("कृपया Amazon या Flipkart का product URL डालें।");
         return;
     }
 
+    const isAmazon = input.includes("amazon.");
+    const isFlipkart = input.includes("flipkart.");
+
+    if (!isAmazon && !isFlipkart) {
+        alert("कृपया Amazon या Flipkart का सही product URL डालें।");
+        return;
+    }
+
+    localStorage.setItem("trackedProduct", input);
+
     alert(
-        "Search feature is ready for API integration.\n\n" +
-        "You searched for:\n" + input
+        "Product successfully added to PriceNazar! 📦\n\n" +
+        "अब यह product tracking के लिए save हो गया है।"
     );
 }
 
