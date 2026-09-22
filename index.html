@@ -503,29 +503,52 @@ footer p {
 
 <script>
 
-function searchProduct() {
-    const input =
-        document.getElementById("productSearch").value.trim();
+async function searchProduct() {
+    const input = document.getElementById("productSearch").value.trim();
 
     if (input === "") {
         alert("कृपया Amazon या Flipkart का product URL डालें।");
         return;
     }
 
-    const isAmazon = input.includes("amazon.");
-    const isFlipkart = input.includes("flipkart.");
+    const isAmazon = /amazon\.(in|com)/i.test(input);
+    const isFlipkart = /flipkart\.com/i.test(input);
 
     if (!isAmazon && !isFlipkart) {
         alert("कृपया Amazon या Flipkart का सही product URL डालें।");
         return;
     }
 
-    localStorage.setItem("trackedProduct", input);
+    try {
+        const response = await fetch("/api/track", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                url: input
+            })
+        });
 
-    alert(
-        "Product successfully added to PriceNazar! 📦\n\n" +
-        "अब यह product tracking के लिए save हो गया है।"
-    );
+        const data = await response.json();
+
+        if (data.success) {
+            localStorage.setItem("trackedProduct", input);
+            localStorage.setItem("trackedStore", data.store);
+
+            alert(
+                "Product successfully added to PriceNazar! 📦\n\n" +
+                "Store: " + data.store + "\n\n" +
+                "अब यह product tracking के लिए save हो गया है।"
+            );
+        } else {
+            alert(data.message || "Product add नहीं हो पाया।");
+        }
+
+    } catch (error) {
+        alert("Server से connection नहीं हो पाया।");
+        console.error(error);
+    }
 }
 
 function setAlert() {
