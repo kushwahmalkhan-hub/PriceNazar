@@ -29,20 +29,39 @@ async function initAuth() {
         SUPABASE_PUBLISHABLE_KEY
     );
 
+
+    // ================================
+    // CREATE AUTH UI FIRST
+    // ================================
+
     createAuthModal();
 
     setupAuthButtons();
 
     updateAuthUI();
 
-    // Auth state listener
+
+    // ================================
+    // AUTH STATE LISTENER
+    // ================================
+
     supabaseClient.auth.onAuthStateChange(
-        async (event, session) => {
+        (event, session) => {
+
+            console.log(
+                "Supabase Auth Event:",
+                event
+            );
 
             updateAuthUI();
 
-            // Password recovery link से वापस आने पर
+
+            // Password recovery detected
             if (event === "PASSWORD_RECOVERY") {
+
+                console.log(
+                    "Password recovery detected"
+                );
 
                 authMode = "recovery";
 
@@ -53,17 +72,45 @@ async function initAuth() {
         }
     );
 
-    // अगर page password recovery के बाद खुला है
-    const {
-        data: { session }
-    } = await supabaseClient.auth.getSession();
 
-    if (session) {
+    // ================================
+    // CHECK RECOVERY URL
+    // ================================
 
-        // Supabase recovery session को handle करेगा
+    const hash =
+        window.location.hash;
+
+
+    const search =
+        window.location.search;
+
+
+    const isRecovery =
+        hash.includes("type=recovery") ||
+        search.includes("type=recovery");
+
+
+    if (isRecovery) {
+
+        console.log(
+            "Recovery URL detected"
+        );
+
+
+        // Give Supabase time to create
+        // the recovery session
+
+        setTimeout(() => {
+
+            authMode = "recovery";
+
+            showRecoveryMode();
+
+            openAuthModal();
+
+        }, 500);
     }
 }
-
 
 // ================================
 // AUTH MODAL
