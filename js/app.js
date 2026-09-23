@@ -383,25 +383,36 @@ function renderPriceHistory(history) {
 
     priceChart.innerHTML = "";
 
-
     if (
         !Array.isArray(history) ||
         history.length === 0
     ) {
-
         priceChart.innerHTML =
             "<p>No price history available.</p>";
-
         return;
-
     }
 
+    const prices = history.map(
+        item => Number(item.price)
+    );
 
-    const prices =
-        history.map(
-            item => Number(item.price)
-        );
+    const width = 700;
+    const height = 300;
 
+    const paddingLeft = 65;
+    const paddingRight = 25;
+    const paddingTop = 25;
+    const paddingBottom = 55;
+
+    const chartWidth =
+        width -
+        paddingLeft -
+        paddingRight;
+
+    const chartHeight =
+        height -
+        paddingTop -
+        paddingBottom;
 
     const maxPrice =
         Math.max(...prices);
@@ -409,83 +420,349 @@ function renderPriceHistory(history) {
     const minPrice =
         Math.min(...prices);
 
-
     const range =
         maxPrice - minPrice || 1;
 
 
-    history.forEach(
-        (item) => {
+    /* ================= POINTS ================= */
 
-            const price =
-                Number(item.price);
+    const points = history.map(
+        (item, index) => {
 
-
-            let height =
-                35 +
+            const x =
+                paddingLeft +
                 (
-                    (price - minPrice) /
+                    index /
+                    Math.max(history.length - 1, 1)
+                ) *
+                chartWidth;
+
+            const y =
+                paddingTop +
+                (
+                    (maxPrice - Number(item.price)) /
                     range
-                ) * 55;
+                ) *
+                chartHeight;
 
-
-            if (height > 92) {
-                height = 92;
-            }
-
-
-            if (height < 30) {
-                height = 30;
-            }
-
-
-            const bar =
-                document.createElement(
-                    "div"
-                );
-
-            bar.className =
-                "chart-bar";
-
-
-            bar.style.setProperty(
-                "--bar-height",
-                `${height}%`
-            );
-
-
-            const value =
-                document.createElement(
-                    "span"
-                );
-
-            value.className =
-                "chart-value";
-
-            value.textContent =
-                formatPrice(price);
-
-
-            const date =
-                document.createElement(
-                    "span"
-                );
-
-            date.className =
-                "chart-date";
-
-            date.textContent =
-                item.date;
-
-
-            bar.appendChild(value);
-
-            bar.appendChild(date);
-
-            priceChart.appendChild(bar);
+            return {
+                x,
+                y,
+                price: Number(item.price),
+                date: item.date
+            };
 
         }
     );
+
+
+    /* ================= SVG ================= */
+
+    const svgNS =
+        "http://www.w3.org/2000/svg";
+
+    const svg =
+        document.createElementNS(
+            svgNS,
+            "svg"
+        );
+
+    svg.setAttribute(
+        "viewBox",
+        `0 0 ${width} ${height}`
+    );
+
+    svg.setAttribute(
+        "width",
+        "100%"
+    );
+
+    svg.setAttribute(
+        "height",
+        "300"
+    );
+
+    svg.style.display =
+        "block";
+
+    svg.style.overflow =
+        "visible";
+
+
+    /* ================= GRID LINES ================= */
+
+    for (let i = 0; i <= 4; i++) {
+
+        const y =
+            paddingTop +
+            (chartHeight / 4) * i;
+
+        const line =
+            document.createElementNS(
+                svgNS,
+                "line"
+            );
+
+        line.setAttribute(
+            "x1",
+            paddingLeft
+        );
+
+        line.setAttribute(
+            "x2",
+            width - paddingRight
+        );
+
+        line.setAttribute(
+            "y1",
+            y
+        );
+
+        line.setAttribute(
+            "y2",
+            y
+        );
+
+        line.setAttribute(
+            "stroke",
+            "rgba(148,163,184,0.20)"
+        );
+
+        line.setAttribute(
+            "stroke-width",
+            "1"
+        );
+
+        svg.appendChild(line);
+
+
+        /* Y-axis price */
+
+        const priceValue =
+            maxPrice -
+            (
+                range / 4
+            ) * i;
+
+        const text =
+            document.createElementNS(
+                svgNS,
+                "text"
+            );
+
+        text.setAttribute(
+            "x",
+            8
+        );
+
+        text.setAttribute(
+            "y",
+            y + 4
+        );
+
+        text.setAttribute(
+            "fill",
+            "#94a3b8"
+        );
+
+        text.setAttribute(
+            "font-size",
+            "12"
+        );
+
+        text.textContent =
+            formatPrice(
+                Math.round(priceValue)
+            );
+
+        svg.appendChild(text);
+
+    }
+
+
+    /* ================= LINE ================= */
+
+    const pathData =
+        points
+            .map(
+                (point, index) =>
+                    `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`
+            )
+            .join(" ");
+
+
+    const path =
+        document.createElementNS(
+            svgNS,
+            "path"
+        );
+
+    path.setAttribute(
+        "d",
+        pathData
+    );
+
+    path.setAttribute(
+        "fill",
+        "none"
+    );
+
+    path.setAttribute(
+        "stroke",
+        "#60a5fa"
+    );
+
+    path.setAttribute(
+        "stroke-width",
+        "4"
+    );
+
+    path.setAttribute(
+        "stroke-linecap",
+        "round"
+    );
+
+    path.setAttribute(
+        "stroke-linejoin",
+        "round"
+    );
+
+    svg.appendChild(path);
+
+
+    /* ================= POINTS + LABELS ================= */
+
+    points.forEach(
+        point => {
+
+            const circle =
+                document.createElementNS(
+                    svgNS,
+                    "circle"
+                );
+
+            circle.setAttribute(
+                "cx",
+                point.x
+            );
+
+            circle.setAttribute(
+                "cy",
+                point.y
+            );
+
+            circle.setAttribute(
+                "r",
+                "5"
+            );
+
+            circle.setAttribute(
+                "fill",
+                "#60a5fa"
+            );
+
+            circle.setAttribute(
+                "stroke",
+                "#ffffff"
+            );
+
+            circle.setAttribute(
+                "stroke-width",
+                "2"
+            );
+
+            svg.appendChild(circle);
+
+
+            /* Price label */
+
+            const priceText =
+                document.createElementNS(
+                    svgNS,
+                    "text"
+                );
+
+            priceText.setAttribute(
+                "x",
+                point.x
+            );
+
+            priceText.setAttribute(
+                "y",
+                point.y - 12
+            );
+
+            priceText.setAttribute(
+                "text-anchor",
+                "middle"
+            );
+
+            priceText.setAttribute(
+                "fill",
+                "#e2e8f0"
+            );
+
+            priceText.setAttribute(
+                "font-size",
+                "11"
+            );
+
+            priceText.setAttribute(
+                "font-weight",
+                "600"
+            );
+
+            priceText.textContent =
+                formatPrice(
+                    point.price
+                );
+
+            svg.appendChild(priceText);
+
+
+            /* Date label */
+
+            const dateText =
+                document.createElementNS(
+                    svgNS,
+                    "text"
+                );
+
+            dateText.setAttribute(
+                "x",
+                point.x
+            );
+
+            dateText.setAttribute(
+                "y",
+                height - 18
+            );
+
+            dateText.setAttribute(
+                "text-anchor",
+                "middle"
+            );
+
+            dateText.setAttribute(
+                "fill",
+                "#94a3b8"
+            );
+
+            dateText.setAttribute(
+                "font-size",
+                "11"
+            );
+
+            dateText.textContent =
+                point.date;
+
+            svg.appendChild(dateText);
+
+        }
+    );
+
+
+    priceChart.appendChild(svg);
 
 }
 
