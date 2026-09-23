@@ -4,15 +4,25 @@
 
 const SUPABASE_URL = "https://fpkkyppdhkngkktkrbji.supabase.co";
 
-// यहाँ अपना Supabase PUBLISHABLE KEY डालें
+// Supabase PUBLISHABLE KEY
 // Secret / Service key बिल्कुल नहीं डालना है.
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_ib6fxqUCmPPGcJZE0Yqo3A_9Y8pUSXM";
 
 let supabaseClient = null;
 
+let authMode = "login";
+
+
+// ================================
+// INIT AUTH
+// ================================
+
 async function initAuth() {
+
     const { createClient } =
-        await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+        await import(
+            "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+        );
 
     supabaseClient = createClient(
         SUPABASE_URL,
@@ -20,12 +30,38 @@ async function initAuth() {
     );
 
     createAuthModal();
+
     setupAuthButtons();
+
     updateAuthUI();
 
-    supabaseClient.auth.onAuthStateChange(() => {
-        updateAuthUI();
-    });
+    // Auth state listener
+    supabaseClient.auth.onAuthStateChange(
+        async (event, session) => {
+
+            updateAuthUI();
+
+            // Password recovery link से वापस आने पर
+            if (event === "PASSWORD_RECOVERY") {
+
+                authMode = "recovery";
+
+                showRecoveryMode();
+
+                openAuthModal();
+            }
+        }
+    );
+
+    // अगर page password recovery के बाद खुला है
+    const {
+        data: { session }
+    } = await supabaseClient.auth.getSession();
+
+    if (session) {
+
+        // Supabase recovery session को handle करेगा
+    }
 }
 
 
@@ -43,6 +79,7 @@ function createAuthModal() {
 
     modal.innerHTML = `
         <div class="auth-overlay">
+
             <div class="auth-box">
 
                 <button
@@ -65,6 +102,7 @@ function createAuthModal() {
                         type="email"
                         id="authEmail"
                         placeholder="Email address"
+                        autocomplete="email"
                         required
                     >
 
@@ -72,6 +110,7 @@ function createAuthModal() {
                         type="password"
                         id="authPassword"
                         placeholder="Password"
+                        autocomplete="current-password"
                         minlength="6"
                         required
                     >
@@ -84,6 +123,14 @@ function createAuthModal() {
                     </button>
 
                 </form>
+
+                <button
+                    id="forgotPasswordBtn"
+                    type="button"
+                    class="forgot-password-btn"
+                >
+                    Forgot Password?
+                </button>
 
                 <p
                     id="authMessage"
@@ -106,37 +153,75 @@ function createAuthModal() {
                 </div>
 
             </div>
+
         </div>
     `;
 
     document.body.appendChild(modal);
 
+
+    // Close
     document
         .getElementById("authCloseBtn")
-        .addEventListener("click", closeAuthModal);
+        .addEventListener(
+            "click",
+            closeAuthModal
+        );
 
+
+    // Login / Signup / Recovery form
     document
         .getElementById("authForm")
-        .addEventListener("submit", handleAuth);
+        .addEventListener(
+            "submit",
+            handleAuth
+        );
 
+
+    // Login <-> Signup
     document
         .getElementById("authSwitchBtn")
-        .addEventListener("click", toggleAuthMode);
+        .addEventListener(
+            "click",
+            toggleAuthMode
+        );
+
+
+    // Forgot password
+    document
+        .getElementById("forgotPasswordBtn")
+        .addEventListener(
+            "click",
+            showForgotPassword
+        );
 }
 
 
 // ================================
-// LOGIN / SIGNUP
+// LOGIN / SIGNUP SWITCH
 // ================================
-
-let authMode = "login";
 
 function toggleAuthMode() {
 
-    authMode =
-        authMode === "login"
-            ? "signup"
-            : "login";
+    if (authMode === "recovery") {
+        authMode = "login";
+    } else {
+
+        authMode =
+            authMode === "login"
+                ? "signup"
+                : "login";
+    }
+
+    updateAuthModeUI();
+}
+
+
+// ================================
+// UPDATE AUTH UI
+// ================================
+
+function updateAuthModeUI() {
 
     const title =
         document.getElementById("authTitle");
@@ -153,51 +238,189 @@ function toggleAuthMode() {
     const switchBtn =
         document.getElementById("authSwitchBtn");
 
+    const forgotBtn =
+        document.getElementById("forgotPasswordBtn");
+
+    const password =
+        document.getElementById("authPassword");
+
+    const email =
+        document.getElementById("authEmail");
+
     const message =
         document.getElementById("authMessage");
 
+
+    if (
+        !title ||
+        !subtitle ||
+        !submit ||
+        !switchText ||
+        !switchBtn ||
+        !message
+    ) {
+        return;
+    }
+
+
     message.textContent = "";
+
+
+    // ================================
+    // RECOVERY MODE
+    // ================================
+
+    if (authMode === "recovery") {
+
+        title.textContent =
+            "Set New Password";
+
+        subtitle.textContent =
+            "Create a new password for your PriceNazar account";
+
+        submit.textContent =
+            "Update Password";
+
+        switchText.textContent =
+            "Remembered your password?";
+
+        switchBtn.textContent =
+            "Login";
+
+        if (forgotBtn) {
+            forgotBtn.style.display = "none";
+        }
+
+        if (email) {
+            email.style.display = "none";
+            email.required = false;
+        }
+
+        if (password) {
+            password.placeholder =
+                "New password";
+
+            password.autocomplete =
+                "new-password";
+
+            password.required = true;
+        }
+
+        return;
+    }
+
+
+    // ================================
+    // SIGNUP MODE
+    // ================================
 
     if (authMode === "signup") {
 
-        title.textContent = "Create Account";
+        title.textContent =
+            "Create Account";
 
         subtitle.textContent =
             "Create your PriceNazar account";
 
-        submit.textContent = "Sign Up";
+        submit.textContent =
+            "Sign Up";
 
         switchText.textContent =
             "Already have an account?";
 
-        switchBtn.textContent = "Login";
+        switchBtn.textContent =
+            "Login";
 
-    } else {
+        if (forgotBtn) {
+            forgotBtn.style.display = "block";
+        }
 
-        title.textContent = "Login";
+        if (email) {
+            email.style.display = "block";
+            email.required = true;
+        }
 
-        subtitle.textContent =
-            "Login to your PriceNazar account";
+        if (password) {
+            password.style.display = "block";
+            password.required = true;
+            password.placeholder = "Password";
+            password.autocomplete = "new-password";
+        }
 
-        submit.textContent = "Login";
+        return;
+    }
 
-        switchText.textContent =
-            "Don't have an account?";
 
-        switchBtn.textContent = "Sign Up";
+    // ================================
+    // LOGIN MODE
+    // ================================
+
+    title.textContent =
+        "Login";
+
+    subtitle.textContent =
+        "Login to your PriceNazar account";
+
+    submit.textContent =
+        "Login";
+
+    switchText.textContent =
+        "Don't have an account?";
+
+    switchBtn.textContent =
+        "Sign Up";
+
+    if (forgotBtn) {
+        forgotBtn.style.display = "block";
+    }
+
+    if (email) {
+        email.style.display = "block";
+        email.required = true;
+    }
+
+    if (password) {
+        password.style.display = "block";
+        password.required = true;
+        password.placeholder = "Password";
+        password.autocomplete = "current-password";
     }
 }
 
+
+// ================================
+// SHOW RECOVERY MODE
+// ================================
+
+function showRecoveryMode() {
+
+    authMode = "recovery";
+
+    updateAuthModeUI();
+
+    const modal =
+        document.getElementById("authModal");
+
+    if (modal) {
+        modal.classList.add("active");
+    }
+}
+
+
+// ================================
+// HANDLE LOGIN / SIGNUP / RECOVERY
+// ================================
 
 async function handleAuth(event) {
 
     event.preventDefault();
 
-    const email =
-        document.getElementById("authEmail").value.trim();
 
-    const password =
-        document.getElementById("authPassword").value;
+    const emailInput =
+        document.getElementById("authEmail");
+
+    const passwordInput =
+        document.getElementById("authPassword");
 
     const message =
         document.getElementById("authMessage");
@@ -205,51 +428,201 @@ async function handleAuth(event) {
     const submit =
         document.querySelector(".auth-submit");
 
-    message.textContent = "Please wait...";
+
+    const email =
+        emailInput
+            ? emailInput.value.trim()
+            : "";
+
+    const password =
+        passwordInput
+            ? passwordInput.value
+            : "";
+
+
+    message.textContent =
+        "Please wait...";
 
     submit.disabled = true;
 
+
     try {
+
+        // ================================
+        // PASSWORD RECOVERY
+        // ================================
+
+        if (authMode === "recovery") {
+
+            if (password.length < 6) {
+
+                throw new Error(
+                    "Password must be at least 6 characters."
+                );
+            }
+
+
+            const {
+                error
+            } =
+                await supabaseClient.auth.updateUser({
+                    password: password
+                });
+
+
+            if (error) throw error;
+
+
+            message.textContent =
+                "Password updated successfully! You can now login.";
+
+
+            passwordInput.value = "";
+
+
+            setTimeout(() => {
+
+                authMode = "login";
+
+                updateAuthModeUI();
+
+            }, 1500);
+
+
+            return;
+        }
+
+
+        // ================================
+        // SIGN UP
+        // ================================
 
         if (authMode === "signup") {
 
-            const { error } =
+            const {
+                error
+            } =
                 await supabaseClient.auth.signUp({
-                    email,
-                    password
+                    email: email,
+                    password: password
                 });
 
+
             if (error) throw error;
+
 
             message.textContent =
                 "Account created successfully. Please check your email if confirmation is required.";
 
-        } else {
 
-            const { error } =
-                await supabaseClient.auth.signInWithPassword({
-                    email,
-                    password
-                });
-
-            if (error) throw error;
-
-            message.textContent =
-                "Login successful!";
-
-            setTimeout(() => {
-                closeAuthModal();
-            }, 700);
+            return;
         }
+
+
+        // ================================
+        // LOGIN
+        // ================================
+
+        const {
+            error
+        } =
+            await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+
+        if (error) throw error;
+
+
+        message.textContent =
+            "Login successful!";
+
+
+        setTimeout(() => {
+
+            closeAuthModal();
+
+        }, 700);
+
 
     } catch (error) {
 
         message.textContent =
-            error.message || "Authentication failed.";
+            error.message ||
+            "Authentication failed.";
 
     } finally {
 
         submit.disabled = false;
+    }
+}
+
+
+// ================================
+// FORGOT PASSWORD
+// ================================
+
+async function showForgotPassword() {
+
+    const emailInput =
+        document.getElementById("authEmail");
+
+    const message =
+        document.getElementById("authMessage");
+
+    if (!emailInput || !message) return;
+
+
+    const email =
+        emailInput.value.trim();
+
+
+    if (!email) {
+
+        message.textContent =
+            "Please enter your email address first.";
+
+        emailInput.focus();
+
+        return;
+    }
+
+
+    message.textContent =
+        "Sending password reset email...";
+
+
+    try {
+
+        const redirectUrl =
+            window.location.origin +
+            window.location.pathname;
+
+
+        const {
+            error
+        } =
+            await supabaseClient.auth.resetPasswordForEmail(
+                email,
+                {
+                    redirectTo: redirectUrl
+                }
+            );
+
+
+        if (error) throw error;
+
+
+        message.textContent =
+            "Password reset email sent. Please check your email.";
+
+
+    } catch (error) {
+
+        message.textContent =
+            error.message ||
+            "Unable to send reset email.";
     }
 }
 
@@ -262,13 +635,20 @@ async function logoutUser() {
 
     if (!supabaseClient) return;
 
-    const { error } =
+
+    const {
+        error
+    } =
         await supabaseClient.auth.signOut();
 
+
     if (error) {
+
         alert(error.message);
+
         return;
     }
+
 
     updateAuthUI();
 }
@@ -282,9 +662,14 @@ async function updateAuthUI() {
 
     if (!supabaseClient) return;
 
+
     const {
-        data: { session }
-    } = await supabaseClient.auth.getSession();
+        data: {
+            session
+        }
+    } =
+        await supabaseClient.auth.getSession();
+
 
     const loginBtn =
         document.getElementById("loginBtn");
@@ -292,7 +677,9 @@ async function updateAuthUI() {
     const logoutBtn =
         document.getElementById("logoutBtn");
 
+
     if (!loginBtn || !logoutBtn) return;
+
 
     if (session) {
 
@@ -321,13 +708,22 @@ function setupAuthButtons() {
     const logoutBtn =
         document.getElementById("logoutBtn");
 
+
     if (loginBtn) {
 
         loginBtn.addEventListener(
             "click",
-            openAuthModal
+            () => {
+
+                authMode = "login";
+
+                updateAuthModeUI();
+
+                openAuthModal();
+            }
         );
     }
+
 
     if (logoutBtn) {
 
@@ -339,23 +735,35 @@ function setupAuthButtons() {
 }
 
 
+// ================================
+// OPEN MODAL
+// ================================
+
 function openAuthModal() {
 
     const modal =
         document.getElementById("authModal");
 
+
     if (!modal) return;
+
 
     modal.classList.add("active");
 }
 
+
+// ================================
+// CLOSE MODAL
+// ================================
 
 function closeAuthModal() {
 
     const modal =
         document.getElementById("authModal");
 
+
     if (!modal) return;
+
 
     modal.classList.remove("active");
 }
