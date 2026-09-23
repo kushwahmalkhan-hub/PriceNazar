@@ -169,15 +169,14 @@ function detectStore(url) {
                 .replace(/^www\./, "");
 
         if (
-            hostname === "amazon.in" ||
-            hostname.endsWith(".amazon.in") ||
-            hostname === "amazon.com" ||
-            hostname.endsWith(".amazon.com")
-        ) {
-
-            return "amazon";
-
-        }
+    hostname === "amazon.in" ||
+    hostname.endsWith(".amazon.in") ||
+    hostname === "amazon.com" ||
+    hostname.endsWith(".amazon.com") ||
+    hostname === "link.amazon"
+) {
+    return "amazon";
+}
 
 
         if (
