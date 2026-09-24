@@ -94,7 +94,50 @@ const mobileMenuBtn =
 
 const mainNav =
     document.querySelector(".main-nav");
+/* ================= API AUTH ================= */
 
+async function getAuthHeaders() {
+
+    try {
+
+        if (
+            typeof supabaseClient === "undefined" ||
+            !supabaseClient
+        ) {
+            return null;
+        }
+
+        const {
+            data,
+            error
+        } = await supabaseClient.auth.getSession();
+
+        if (
+            error ||
+            !data ||
+            !data.session
+        ) {
+            return null;
+        }
+
+        return {
+            "Content-Type":
+                "application/json",
+
+            "Authorization":
+                `Bearer ${data.session.access_token}`
+        };
+
+    } catch (error) {
+
+        console.warn(
+            "Unable to get auth session:",
+            error
+        );
+
+        return null;
+    }
+}
 
 /* ================= HELPERS ================= */
 
@@ -764,7 +807,67 @@ function renderPriceHistory(history) {
     priceChart.appendChild(svg);
 
 }
+/* ================= LOAD PRICE HISTORY ================= */
 
+async function loadPriceHistory(productUrl) {
+
+    if (!productUrl) {
+        return;
+    }
+
+    try {
+
+        const authHeaders =
+            await getAuthHeaders();
+
+        const headers =
+            authHeaders || {
+                "Content-Type":
+                    "application/json"
+            };
+
+        const response =
+            await fetch(
+                `/api/history?url=${encodeURIComponent(productUrl)}`,
+                {
+                    method: "GET",
+                    headers: headers
+                }
+            );
+
+        const result =
+            await response.json();
+
+        if (
+            response.ok &&
+            result.success &&
+            Array.isArray(result.history)
+        ) {
+
+            renderPriceHistory(
+                result.history
+            );
+
+            return result;
+
+        }
+
+        console.warn(
+            "Price history unavailable:",
+            result.message || "Unknown error"
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "History API request failed:",
+            error
+        );
+
+    }
+
+    return null;
+}
 
 /* ================= TRACK PRODUCT ================= */
 
@@ -826,20 +929,31 @@ async function trackProduct() {
 
     try {
 
+        // Get logged-in user's session
+        const authHeaders =
+            await getAuthHeaders();
+
+
+        const headers =
+            authHeaders || {
+                "Content-Type":
+                    "application/json"
+            };
+
+
         const response =
             await fetch(
                 "/api/track",
                 {
                     method: "POST",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                    headers:
+                        headers,
 
-                    body: JSON.stringify({
-                        url: url
-                    })
+                    body:
+                        JSON.stringify({
+                            url: url
+                        })
                 }
             );
 
@@ -860,13 +974,22 @@ async function trackProduct() {
                 );
 
 
-            renderTracker(product);
+            renderTracker(
+                product
+            );
 
 
             showSearchStatus(
                 `${result.store || product.store} product added successfully.`,
                 "success"
             );
+
+
+            // Load saved price history
+            await loadPriceHistory(
+                url
+            );
+
 
         } else {
 
@@ -881,15 +1004,16 @@ async function trackProduct() {
     } catch (error) {
 
         console.warn(
-            "API request failed:",
+            "Track API request failed:",
             error
         );
 
 
         /*
          * Demo fallback.
-         * This keeps the frontend usable while
-         * real product APIs are being connected.
+         * Real Amazon/Flipkart price data
+         * will be connected after authorized
+         * store API access is available.
          */
 
         const product =
@@ -899,7 +1023,9 @@ async function trackProduct() {
             );
 
 
-        renderTracker(product);
+        renderTracker(
+            product
+        );
 
 
         showSearchStatus(
@@ -925,6 +1051,7 @@ async function trackProduct() {
     }
 
 }
+            
 
 
 /* ================= DEMO PRODUCT ================= */
@@ -989,9 +1116,7 @@ async function savePriceAlert() {
 
     const value =
         targetPrice
-            ? Number(
-                targetPrice.value
-            )
+            ? Number(targetPrice.value)
             : 0;
 
 
@@ -1008,7 +1133,6 @@ async function savePriceAlert() {
         }
 
         return;
-
     }
 
 
@@ -1016,85 +1140,159 @@ async function savePriceAlert() {
         getStoredProduct();
 
 
-    const alertData = {
+    if (!savedProduct || !savedProduct.url) {
 
-        targetPrice:
-            value,
+        if (alertStatus) {
 
-        productUrl:
-            savedProduct
-                ? savedProduct.url
-                : "",
+            alertStatus.textContent =
+                "Please track a product first.";
 
-        createdAt:
-            new Date().toISOString()
+            alertStatus.style.color =
+                "#dc2626";
 
-    };
+        }
+
+        return;
+    }
 
 
     try {
 
-        localStorage.setItem(
-            "priceNazarAlert",
-            JSON.stringify(alertData)
-        );
+        /* Get logged-in user's session */
+
+        const authHeaders =
+            await getAuthHeaders();
+
+
+        if (!authHeaders) {
+
+            if (alertStatus) {
+
+                alertStatus.textContent =
+                    "Please login to create a price alert.";
+
+                alertStatus.style.color =
+                    "#dc2626";
+
+            }
+
+            return;
+        }
+
+
+        if (alertStatus) {
+
+            alertStatus.textContent =
+                "Saving price alert...";
+
+            alertStatus.style.color =
+                "#2563eb";
+
+        }
+
+
+        const response =
+            await fetch(
+                "/api/alerts",
+                {
+                    method: "POST",
+
+                    headers:
+                        authHeaders,
+
+                    body:
+                        JSON.stringify({
+
+                            targetPrice:
+                                value,
+
+                            productUrl:
+                                savedProduct.url
+
+                        })
+                }
+            );
+
+
+        const result =
+            await response.json();
+
+
+        if (
+            !response.ok ||
+            !result.success
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Unable to save price alert."
+            );
+
+        }
+
+
+        /* Save local copy for UI */
+
+        const alertData = {
+
+            targetPrice:
+                value,
+
+            productUrl:
+                savedProduct.url,
+
+            createdAt:
+                new Date().toISOString()
+
+        };
+
+
+        try {
+
+            localStorage.setItem(
+                "priceNazarAlert",
+                JSON.stringify(alertData)
+            );
+
+        } catch (storageError) {
+
+            console.warn(
+                "Could not save local alert:",
+                storageError
+            );
+
+        }
+
+
+        if (alertStatus) {
+
+            alertStatus.textContent =
+                `Price alert saved for ${formatPrice(value)}.`;
+
+            alertStatus.style.color =
+                "#16a34a";
+
+        }
+
 
     } catch (error) {
 
-        console.warn(
-            "Could not save alert:",
+        console.error(
+            "Price alert error:",
             error
         );
 
-    }
 
+        if (alertStatus) {
 
-    if (alertStatus) {
+            alertStatus.textContent =
+                error.message ||
+                "Unable to save price alert.";
 
-        alertStatus.textContent =
-            `Price alert saved for ${formatPrice(value)}.`;
+            alertStatus.style.color =
+                "#dc2626";
 
-        alertStatus.style.color =
-            "#16a34a";
-
-    }
-
-
-    /*
-     * Try backend alert API.
-     * If the API is not connected yet,
-     * localStorage still keeps the alert.
-     */
-
-    try {
-
-        await fetch(
-            "/api/alerts",
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body: JSON.stringify({
-                    targetPrice:
-                        value,
-
-                    productUrl:
-                        savedProduct
-                            ? savedProduct.url
-                            : ""
-                })
-            }
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Alert API not available yet."
-        );
+        }
 
     }
 
