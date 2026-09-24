@@ -1,39 +1,22 @@
 export default async function handler(req, res) {
 
-    res.setHeader(
-        "Access-Control-Allow-Origin",
-        "*"
-    );
-
-    res.setHeader(
-        "Access-Control-Allow-Methods",
-        "POST, OPTIONS"
-    );
-
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.setHeader(
         "Access-Control-Allow-Headers",
         "Content-Type, Authorization"
     );
 
-
     if (req.method === "OPTIONS") {
         return res.status(200).end();
     }
 
-
     if (req.method !== "POST") {
-
         return res.status(405).json({
-
             success: false,
-
-            message:
-                "Only POST request is allowed"
-
+            message: "Only POST request is allowed"
         });
-
     }
-
 
     try {
 
@@ -47,21 +30,23 @@ export default async function handler(req, res) {
         const SUPABASE_KEY =
             process.env.SUPABASE_PUBLISHABLE_KEY;
 
+        const RAPIDAPI_KEY =
+            process.env.RAPIDAPI_KEY;
 
-        if (
-            !SUPABASE_URL ||
-            !SUPABASE_KEY
-        ) {
 
+        if (!SUPABASE_URL || !SUPABASE_KEY) {
             return res.status(500).json({
-
                 success: false,
-
-                message:
-                    "Supabase environment variables are missing"
-
+                message: "Supabase environment variables are missing"
             });
+        }
 
+
+        if (!RAPIDAPI_KEY) {
+            return res.status(500).json({
+                success: false,
+                message: "RapidAPI key is missing"
+            });
         }
 
 
@@ -72,64 +57,37 @@ export default async function handler(req, res) {
         const authHeader =
             req.headers.authorization || "";
 
-
-        if (
-            !authHeader.startsWith("Bearer ")
-        ) {
-
+        if (!authHeader.startsWith("Bearer ")) {
             return res.status(401).json({
-
                 success: false,
-
-                message:
-                    "Please login to track products"
-
+                message: "Please login to track products"
             });
-
         }
 
-
         const token =
-            authHeader.replace(
-                "Bearer ",
-                ""
-            );
+            authHeader.replace("Bearer ", "");
 
 
         /* =========================
            VERIFY USER
            ========================= */
 
-        const userResponse =
-            await fetch(
-                `${SUPABASE_URL}/auth/v1/user`,
-                {
-
-                    headers: {
-
-                        apikey:
-                            SUPABASE_KEY,
-
-                        Authorization:
-                            `Bearer ${token}`
-
-                    }
-
+        const userResponse = await fetch(
+            `${SUPABASE_URL}/auth/v1/user`,
+            {
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${token}`
                 }
-            );
+            }
+        );
 
 
         if (!userResponse.ok) {
-
             return res.status(401).json({
-
                 success: false,
-
-                message:
-                    "Invalid or expired session"
-
+                message: "Invalid or expired session"
             });
-
         }
 
 
@@ -138,16 +96,10 @@ export default async function handler(req, res) {
 
 
         if (!user?.id) {
-
             return res.status(401).json({
-
                 success: false,
-
-                message:
-                    "User not found"
-
+                message: "User not found"
             });
-
         }
 
 
@@ -163,16 +115,10 @@ export default async function handler(req, res) {
 
 
         if (!url) {
-
             return res.status(400).json({
-
                 success: false,
-
-                message:
-                    "Product URL is required"
-
+                message: "Product URL is required"
             });
-
         }
 
 
@@ -182,20 +128,15 @@ export default async function handler(req, res) {
 
         let store = null;
 
-
         try {
 
             const parsedUrl =
                 new URL(url);
 
-
             const hostname =
                 parsedUrl.hostname
                     .toLowerCase()
-                    .replace(
-                        /^www\./,
-                        ""
-                    );
+                    .replace(/^www\./, "");
 
 
             if (
@@ -205,9 +146,7 @@ export default async function handler(req, res) {
                 hostname.endsWith(".amazon.com") ||
                 hostname === "link.amazon"
             ) {
-
                 store = "Amazon";
-
             }
 
 
@@ -215,36 +154,114 @@ export default async function handler(req, res) {
                 hostname === "flipkart.com" ||
                 hostname.endsWith(".flipkart.com")
             ) {
-
                 store = "Flipkart";
-
             }
 
         } catch (error) {
 
             return res.status(400).json({
-
                 success: false,
-
-                message:
-                    "Invalid product URL"
-
+                message: "Invalid product URL"
             });
 
         }
 
 
         if (!store) {
-
             return res.status(400).json({
-
                 success: false,
-
-                message:
-                    "Only Amazon or Flipkart URL is supported"
-
+                message: "Only Amazon or Flipkart URL is supported"
             });
+        }
 
+
+        /* =========================
+           PRODUCT DATA
+           ========================= */
+
+        let fetchedProductName =
+            product_name ||
+            productName ||
+            null;
+
+        let currentPrice = null;
+        let lowestPrice = null;
+        let imageUrl = null;
+
+
+        /* =========================
+           FLIPKART RAPIDAPI
+           ========================= */
+
+        if (store === "Flipkart") {
+
+            const rapidResponse = await fetch(
+                "https://flipkart-product-data-api.p.rapidapi.com/product",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-RapidAPI-Key": RAPIDAPI_KEY,
+                        "X-RapidAPI-Host":
+                            "flipkart-product-data-api.p.rapidapi.com"
+                    },
+
+                    body: JSON.stringify({
+                        url: url
+                    })
+                }
+            );
+
+
+            const rapidData =
+                await rapidResponse.json();
+
+
+            if (!rapidResponse.ok) {
+
+                console.error(
+                    "RapidAPI error:",
+                    rapidData
+                );
+
+                return res.status(502).json({
+                    success: false,
+                    message:
+                        "Unable to fetch Flipkart product data",
+                    error:
+                        rapidData
+                });
+
+            }
+
+
+            const product =
+                rapidData?.product ||
+                rapidData?.data ||
+                rapidData;
+
+
+            fetchedProductName =
+                product?.title ||
+                product?.name ||
+                fetchedProductName;
+
+
+            currentPrice =
+                Number(product?.price) ||
+                null;
+
+
+            lowestPrice =
+                currentPrice;
+
+
+            imageUrl =
+                product?.image ||
+                product?.image_url ||
+                product?.images?.[0] ||
+                null;
         }
 
 
@@ -252,50 +269,50 @@ export default async function handler(req, res) {
            SAVE TRACKED PRODUCT
            ========================= */
 
-        const response =
-            await fetch(
-                `${SUPABASE_URL}/rest/v1/tracked_products`,
-                {
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/tracked_products`,
+            {
+                method: "POST",
 
-                    method: "POST",
+                headers: {
+                    apikey: SUPABASE_KEY,
 
-                    headers: {
+                    Authorization:
+                        `Bearer ${token}`,
 
-                        apikey:
-                            SUPABASE_KEY,
+                    "Content-Type":
+                        "application/json",
 
-                        Authorization:
-                            `Bearer ${token}`,
+                    Prefer:
+                        "return=representation"
+                },
 
-                        "Content-Type":
-                            "application/json",
+                body: JSON.stringify({
 
-                        Prefer:
-                            "return=representation"
+                    user_id:
+                        user.id,
 
-                    },
+                    product_url:
+                        url,
 
-                    body:
-                        JSON.stringify({
+                    product_name:
+                        fetchedProductName,
 
-                            user_id:
-                                user.id,
+                    store:
+                        store,
 
-                            product_url:
-                                url,
+                    current_price:
+                        currentPrice,
 
-                            product_name:
-                                product_name ||
-                                productName ||
-                                null,
+                    lowest_price:
+                        lowestPrice,
 
-                            store:
-                                store
+                    image_url:
+                        imageUrl
 
-                        })
-
-                }
-            );
+                })
+            }
+        );
 
 
         const data =
@@ -352,7 +369,6 @@ export default async function handler(req, res) {
             "Track API error:",
             error
         );
-
 
         return res.status(500).json({
 
