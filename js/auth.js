@@ -2,15 +2,15 @@
 // PriceNazar - Supabase Authentication
 // ================================
 
-const SUPABASE_URL = "https://fpkkyppdhkngkktkrbji.supabase.co";
+const SUPABASE_URL =
+    "https://fpkkyppdhkngkktkrbji.supabase.co";
 
-// Supabase PUBLISHABLE KEY
-// Secret / Service key बिल्कुल नहीं डालना है.
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_ib6fxqUCmPPGcJZE0Yqo3A_9Y8pUSXM";
+const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_ib6fxqUCmPPGcJZE0Yqo3A_9Y8pUSXM";
 
 let supabaseClient = null;
-
 let authMode = "login";
+let authInitialized = false;
 
 
 // ================================
@@ -19,98 +19,54 @@ let authMode = "login";
 
 async function initAuth() {
 
-    const { createClient } =
-        await import(
+    if (authInitialized) return;
+
+    authInitialized = true;
+
+    try {
+
+        const {
+            createClient
+        } = await import(
             "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
         );
 
-    supabaseClient = createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
-    );
-
-
-    // ================================
-    // CREATE AUTH UI FIRST
-    // ================================
-
-    createAuthModal();
-
-    setupAuthButtons();
-
-    updateAuthUI();
-
-
-    // ================================
-    // AUTH STATE LISTENER
-    // ================================
-
-    supabaseClient.auth.onAuthStateChange(
-        (event, session) => {
-
-            console.log(
-                "Supabase Auth Event:",
-                event
-            );
-
-            updateAuthUI();
-
-
-            // Password recovery detected
-            if (event === "PASSWORD_RECOVERY") {
-
-                console.log(
-                    "Password recovery detected"
-                );
-
-                authMode = "recovery";
-
-                showRecoveryMode();
-
-                openAuthModal();
-            }
-        }
-    );
-
-
-    // ================================
-    // CHECK RECOVERY URL
-    // ================================
-
-    const hash =
-        window.location.hash;
-
-
-    const search =
-        window.location.search;
-
-
-    const isRecovery =
-        hash.includes("type=recovery") ||
-        search.includes("type=recovery");
-
-
-    if (isRecovery) {
-
-        console.log(
-            "Recovery URL detected"
+        supabaseClient = createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY
         );
 
+        console.log("Supabase initialized successfully");
 
-        // Give Supabase time to create
-        // the recovery session
+        createAuthModal();
 
-        setTimeout(() => {
+        setupAuthButtons();
 
-            authMode = "recovery";
+        updateAuthUI();
 
-            showRecoveryMode();
+        supabaseClient.auth.onAuthStateChange(
+            (event, session) => {
 
-            openAuthModal();
+                console.log(
+                    "Supabase Auth Event:",
+                    event
+                );
 
-        }, 500);
+                updateAuthUI();
+
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Supabase initialization failed:",
+            error
+        );
+
     }
 }
+
 
 // ================================
 // AUTH MODAL
@@ -118,9 +74,12 @@ async function initAuth() {
 
 function createAuthModal() {
 
-    if (document.getElementById("authModal")) return;
+    if (document.getElementById("authModal")) {
+        return;
+    }
 
-    const modal = document.createElement("div");
+    const modal =
+        document.createElement("div");
 
     modal.id = "authModal";
 
@@ -137,7 +96,9 @@ function createAuthModal() {
                     ×
                 </button>
 
-                <h2 id="authTitle">Login</h2>
+                <h2 id="authTitle">
+                    Login
+                </h2>
 
                 <p id="authSubtitle">
                     Login to your PriceNazar account
@@ -207,65 +168,63 @@ function createAuthModal() {
     document.body.appendChild(modal);
 
 
-    // Close
     document
         .getElementById("authCloseBtn")
-        .addEventListener(
+        ?.addEventListener(
             "click",
             closeAuthModal
         );
 
 
-    // Login / Signup / Recovery form
     document
         .getElementById("authForm")
-        .addEventListener(
+        ?.addEventListener(
             "submit",
             handleAuth
         );
 
 
-    // Login <-> Signup
     document
         .getElementById("authSwitchBtn")
-        .addEventListener(
+        ?.addEventListener(
             "click",
             toggleAuthMode
         );
 
 
-    // Forgot password
     document
         .getElementById("forgotPasswordBtn")
-        .addEventListener(
+        ?.addEventListener(
             "click",
             showForgotPassword
         );
+
 }
 
 
 // ================================
-// LOGIN / SIGNUP SWITCH
+// AUTH MODE
 // ================================
 
 function toggleAuthMode() {
 
-    if (authMode === "recovery") {
-        authMode = "login";
+    if (authMode === "login") {
+
+        authMode = "signup";
+
     } else {
 
-        authMode =
-            authMode === "login"
-                ? "signup"
-                : "login";
+        authMode = "login";
+
     }
 
     updateAuthModeUI();
+
 }
 
 
 // ================================
-// UPDATE AUTH UI
+// UPDATE AUTH MODE UI
 // ================================
 
 function updateAuthModeUI() {
@@ -294,72 +253,17 @@ function updateAuthModeUI() {
     const email =
         document.getElementById("authEmail");
 
-    const message =
-        document.getElementById("authMessage");
-
 
     if (
         !title ||
         !subtitle ||
         !submit ||
         !switchText ||
-        !switchBtn ||
-        !message
+        !switchBtn
     ) {
         return;
     }
 
-
-    message.textContent = "";
-
-
-    // ================================
-    // RECOVERY MODE
-    // ================================
-
-    if (authMode === "recovery") {
-
-        title.textContent =
-            "Set New Password";
-
-        subtitle.textContent =
-            "Create a new password for your PriceNazar account";
-
-        submit.textContent =
-            "Update Password";
-
-        switchText.textContent =
-            "Remembered your password?";
-
-        switchBtn.textContent =
-            "Login";
-
-        if (forgotBtn) {
-            forgotBtn.style.display = "none";
-        }
-
-        if (email) {
-            email.style.display = "none";
-            email.required = false;
-        }
-
-        if (password) {
-            password.placeholder =
-                "New password";
-
-            password.autocomplete =
-                "new-password";
-
-            password.required = true;
-        }
-
-        return;
-    }
-
-
-    // ================================
-    // SIGNUP MODE
-    // ================================
 
     if (authMode === "signup") {
 
@@ -379,28 +283,27 @@ function updateAuthModeUI() {
             "Login";
 
         if (forgotBtn) {
-            forgotBtn.style.display = "block";
+            forgotBtn.style.display =
+                "block";
         }
 
         if (email) {
-            email.style.display = "block";
+            email.style.display =
+                "block";
             email.required = true;
         }
 
         if (password) {
-            password.style.display = "block";
+            password.style.display =
+                "block";
             password.required = true;
-            password.placeholder = "Password";
-            password.autocomplete = "new-password";
+            password.placeholder =
+                "Password";
         }
 
         return;
     }
 
-
-    // ================================
-    // LOGIN MODE
-    // ================================
 
     title.textContent =
         "Login";
@@ -418,131 +321,73 @@ function updateAuthModeUI() {
         "Sign Up";
 
     if (forgotBtn) {
-        forgotBtn.style.display = "block";
+        forgotBtn.style.display =
+            "block";
     }
 
     if (email) {
-        email.style.display = "block";
+        email.style.display =
+            "block";
         email.required = true;
     }
 
     if (password) {
-        password.style.display = "block";
+        password.style.display =
+            "block";
         password.required = true;
-        password.placeholder = "Password";
-        password.autocomplete = "current-password";
+        password.placeholder =
+            "Password";
     }
+
 }
 
 
 // ================================
-// SHOW RECOVERY MODE
-// ================================
-
-function showRecoveryMode() {
-
-    authMode = "recovery";
-
-    updateAuthModeUI();
-
-    const modal =
-        document.getElementById("authModal");
-
-    if (modal) {
-        modal.classList.add("active");
-    }
-}
-
-
-// ================================
-// HANDLE LOGIN / SIGNUP / RECOVERY
+// HANDLE AUTH
 // ================================
 
 async function handleAuth(event) {
 
     event.preventDefault();
 
+    if (!supabaseClient) {
 
-    const emailInput =
-        document.getElementById("authEmail");
+        showAuthMessage(
+            "Authentication is still loading. Please try again."
+        );
 
-    const passwordInput =
-        document.getElementById("authPassword");
+        return;
+    }
 
-    const message =
-        document.getElementById("authMessage");
+
+    const email =
+        document
+            .getElementById("authEmail")
+            ?.value
+            .trim() || "";
+
+
+    const password =
+        document
+            .getElementById("authPassword")
+            ?.value || "";
+
 
     const submit =
         document.querySelector(".auth-submit");
 
 
-    const email =
-        emailInput
-            ? emailInput.value.trim()
-            : "";
-
-    const password =
-        passwordInput
-            ? passwordInput.value
-            : "";
+    if (submit) {
+        submit.disabled = true;
+    }
 
 
-    message.textContent =
-        "Please wait...";
-
-    submit.disabled = true;
+    showAuthMessage(
+        "Please wait..."
+    );
 
 
     try {
-
-        // ================================
-        // PASSWORD RECOVERY
-        // ================================
-
-        if (authMode === "recovery") {
-
-            if (password.length < 6) {
-
-                throw new Error(
-                    "Password must be at least 6 characters."
-                );
-            }
-
-
-            const {
-                error
-            } =
-                await supabaseClient.auth.updateUser({
-                    password: password
-                });
-
-
-            if (error) throw error;
-
-
-            message.textContent =
-                "Password updated successfully! You can now login.";
-
-
-            passwordInput.value = "";
-
-
-            setTimeout(() => {
-
-                authMode = "login";
-
-                updateAuthModeUI();
-
-            }, 1500);
-
-
-            return;
-        }
-
-
-        // ================================
-        // SIGN UP
-        // ================================
 
         if (authMode === "signup") {
 
@@ -550,59 +395,73 @@ async function handleAuth(event) {
                 error
             } =
                 await supabaseClient.auth.signUp({
-                    email: email,
-                    password: password
+                    email,
+                    password
                 });
 
 
-            if (error) throw error;
+            if (error) {
+                throw error;
+            }
 
 
-            message.textContent =
-                "Account created successfully. Please check your email if confirmation is required.";
-
+            showAuthMessage(
+                "Account created successfully. Please check your email if confirmation is required."
+            );
 
             return;
         }
 
 
-        // ================================
-        // LOGIN
-        // ================================
-
         const {
             error
         } =
             await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: password
+                email,
+                password
             });
 
 
-        if (error) throw error;
+        if (error) {
+            throw error;
+        }
 
 
-        message.textContent =
-            "Login successful!";
+        showAuthMessage(
+            "Login successful!"
+        );
 
 
-        setTimeout(() => {
+        await updateAuthUI();
 
-            closeAuthModal();
 
-        }, 700);
+        setTimeout(
+            closeAuthModal,
+            500
+        );
 
 
     } catch (error) {
 
-        message.textContent =
+        console.error(
+            "Authentication error:",
+            error
+        );
+
+
+        showAuthMessage(
             error.message ||
-            "Authentication failed.";
+            "Authentication failed."
+        );
 
     } finally {
 
-        submit.disabled = false;
+        if (submit) {
+            submit.disabled = false;
+        }
+
     }
+
 }
 
 
@@ -612,35 +471,34 @@ async function handleAuth(event) {
 
 async function showForgotPassword() {
 
-    const emailInput =
-        document.getElementById("authEmail");
-
-    const message =
-        document.getElementById("authMessage");
-
-    if (!emailInput || !message) return;
+    if (!supabaseClient) {
+        return;
+    }
 
 
     const email =
-        emailInput.value.trim();
+        document
+            .getElementById("authEmail")
+            ?.value
+            .trim() || "";
 
 
     if (!email) {
 
-        message.textContent =
-            "Please enter your email address first.";
-
-        emailInput.focus();
+        showAuthMessage(
+            "Please enter your email address first."
+        );
 
         return;
     }
 
 
-    message.textContent =
-        "Sending password reset email...";
-
-
     try {
+
+        showAuthMessage(
+            "Sending password reset email..."
+        );
+
 
         const redirectUrl =
             window.location.origin +
@@ -650,27 +508,35 @@ async function showForgotPassword() {
         const {
             error
         } =
-            await supabaseClient.auth.resetPasswordForEmail(
-                email,
-                {
-                    redirectTo: redirectUrl
-                }
-            );
+            await supabaseClient.auth
+                .resetPasswordForEmail(
+                    email,
+                    {
+                        redirectTo:
+                            redirectUrl
+                    }
+                );
 
 
-        if (error) throw error;
+        if (error) {
+            throw error;
+        }
 
 
-        message.textContent =
-            "Password reset email sent. Please check your email.";
+        showAuthMessage(
+            "Password reset email sent. Please check your email."
+        );
 
 
     } catch (error) {
 
-        message.textContent =
+        showAuthMessage(
             error.message ||
-            "Unable to send reset email.";
+            "Unable to send reset email."
+        );
+
     }
+
 }
 
 
@@ -680,24 +546,45 @@ async function showForgotPassword() {
 
 async function logoutUser() {
 
-    if (!supabaseClient) return;
-
-
-    const {
-        error
-    } =
-        await supabaseClient.auth.signOut();
-
-
-    if (error) {
-
-        alert(error.message);
-
+    if (!supabaseClient) {
         return;
     }
 
 
-    updateAuthUI();
+    try {
+
+        const {
+            error
+        } =
+            await supabaseClient.auth.signOut();
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        await updateAuthUI();
+
+        console.log(
+            "Logout successful"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Logout error:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Unable to logout."
+        );
+
+    }
+
 }
 
 
@@ -707,15 +594,19 @@ async function logoutUser() {
 
 async function updateAuthUI() {
 
-    if (!supabaseClient) return;
+    if (!supabaseClient) {
+        return;
+    }
 
 
     const {
-        data: {
-            session
-        }
+        data
     } =
         await supabaseClient.auth.getSession();
+
+
+    const session =
+        data?.session || null;
 
 
     const loginBtn =
@@ -725,21 +616,33 @@ async function updateAuthUI() {
         document.getElementById("logoutBtn");
 
 
-    if (!loginBtn || !logoutBtn) return;
+    if (!loginBtn || !logoutBtn) {
+        return;
+    }
 
 
     if (session) {
 
-        loginBtn.classList.add("hidden");
+        loginBtn.classList.add(
+            "hidden"
+        );
 
-        logoutBtn.classList.remove("hidden");
+        logoutBtn.classList.remove(
+            "hidden"
+        );
 
     } else {
 
-        loginBtn.classList.remove("hidden");
+        loginBtn.classList.remove(
+            "hidden"
+        );
 
-        logoutBtn.classList.add("hidden");
+        logoutBtn.classList.add(
+            "hidden"
+        );
+
     }
+
 }
 
 
@@ -758,27 +661,53 @@ function setupAuthButtons() {
 
     if (loginBtn) {
 
-        loginBtn.addEventListener(
-            "click",
-            () => {
+        loginBtn.onclick =
+            function () {
 
                 authMode = "login";
 
                 updateAuthModeUI();
 
                 openAuthModal();
-            }
-        );
+
+            };
+
     }
 
 
     if (logoutBtn) {
 
-        logoutBtn.addEventListener(
-            "click",
-            logoutUser
-        );
+        logoutBtn.onclick =
+            function () {
+
+                logoutUser();
+
+            };
+
     }
+
+}
+
+
+// ================================
+// MESSAGE
+// ================================
+
+function showAuthMessage(
+    message
+) {
+
+    const element =
+        document.getElementById(
+            "authMessage"
+        );
+
+
+    if (element) {
+        element.textContent =
+            message;
+    }
+
 }
 
 
@@ -789,13 +718,19 @@ function setupAuthButtons() {
 function openAuthModal() {
 
     const modal =
-        document.getElementById("authModal");
+        document.getElementById(
+            "authModal"
+        );
 
 
-    if (!modal) return;
+    if (modal) {
 
+        modal.classList.add(
+            "active"
+        );
 
-    modal.classList.add("active");
+    }
+
 }
 
 
@@ -806,13 +741,19 @@ function openAuthModal() {
 function closeAuthModal() {
 
     const modal =
-        document.getElementById("authModal");
+        document.getElementById(
+            "authModal"
+        );
 
 
-    if (!modal) return;
+    if (modal) {
 
+        modal.classList.remove(
+            "active"
+        );
 
-    modal.classList.remove("active");
+    }
+
 }
 
 
@@ -820,7 +761,21 @@ function closeAuthModal() {
 // START
 // ================================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    initAuth
-);
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initAuth,
+        {
+            once: true
+        }
+    );
+
+} else {
+
+    initAuth();
+
+}
