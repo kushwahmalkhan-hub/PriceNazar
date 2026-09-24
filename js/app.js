@@ -828,7 +828,7 @@ async function loadPriceHistory(productUrl) {
 
         const response =
             await fetch(
-                `/api/history?product_url=${encodeURIComponent(productUrl)}`
+                `/api/history?product_url=${encodeURIComponent(productUrl)}`,
                 {
                     method: "GET",
                     headers: headers
@@ -1201,15 +1201,21 @@ async function savePriceAlert() {
                         authHeaders,
 
                     body:
-                        JSON.stringify({
+    JSON.stringify({
 
-                            targetPrice:
-                                value,
+        target_price:
+            value,
 
-                            productUrl:
-                                savedProduct.url
+        product_url:
+            savedProduct.url,
 
-                        })
+        product_name:
+            savedProduct.productName || "",
+
+        store:
+            savedProduct.store || ""
+
+    })
                 }
             );
 
