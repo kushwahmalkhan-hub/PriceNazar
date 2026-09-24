@@ -36,28 +36,36 @@ export default async function handler(req, res) {
         ) {
 
             return res.status(500).json({
+
                 success: false,
+
                 message:
                     "Supabase environment variables are missing"
+
             });
 
         }
 
 
-        // =========================
-        // AUTHENTICATION
-        // =========================
+        /* =========================
+           AUTHENTICATION
+           ========================= */
 
         const authHeader =
             req.headers.authorization || "";
 
 
-        if (!authHeader.startsWith("Bearer ")) {
+        if (
+            !authHeader.startsWith("Bearer ")
+        ) {
 
             return res.status(401).json({
+
                 success: false,
+
                 message:
                     "Authentication required"
+
             });
 
         }
@@ -70,20 +78,22 @@ export default async function handler(req, res) {
             );
 
 
-        // =========================
-        // VERIFY USER
-        // =========================
+        /* =========================
+           VERIFY USER
+           ========================= */
 
         const userResponse =
             await fetch(
                 `${SUPABASE_URL}/auth/v1/user`,
                 {
                     headers: {
+
                         apikey:
                             SUPABASE_KEY,
 
                         Authorization:
                             `Bearer ${token}`
+
                     }
                 }
             );
@@ -92,9 +102,12 @@ export default async function handler(req, res) {
         if (!userResponse.ok) {
 
             return res.status(401).json({
+
                 success: false,
+
                 message:
                     "Invalid or expired session"
+
             });
 
         }
@@ -107,30 +120,35 @@ export default async function handler(req, res) {
         if (!user?.id) {
 
             return res.status(401).json({
+
                 success: false,
+
                 message:
                     "User not found"
+
             });
 
         }
 
 
-        // =========================
-        // GET ALERTS
-        // =========================
+        /* =========================
+           GET ALERTS
+           ========================= */
 
         if (req.method === "GET") {
 
             const response =
                 await fetch(
-                    `${SUPABASE_URL}/rest/v1/price_alerts?user_id=eq.${user.id}&order=created_at.desc`,
+                    `${SUPABASE_URL}/rest/v1/price_alerts?user_id=eq.${encodeURIComponent(user.id)}&order=created_at.desc`,
                     {
                         headers: {
+
                             apikey:
                                 SUPABASE_KEY,
 
                             Authorization:
                                 `Bearer ${token}`
+
                         }
                     }
                 );
@@ -145,11 +163,15 @@ export default async function handler(req, res) {
                 return res.status(
                     response.status
                 ).json({
+
                     success: false,
+
                     message:
                         "Unable to fetch alerts",
+
                     error:
                         data
+
                 });
 
             }
@@ -167,30 +189,116 @@ export default async function handler(req, res) {
         }
 
 
-        // =========================
-        // CREATE ALERT
-        // =========================
+        /* =========================
+           CREATE ALERT
+           ========================= */
 
         if (req.method === "POST") {
 
-            const {
-                product_name,
-                product_url,
-                store,
-                target_price
-            } = req.body || {};
+            const body =
+                req.body || {};
+
+
+            /*
+             * Accept both formats:
+             *
+             * targetPrice / productUrl
+             *
+             * and
+             *
+             * target_price / product_url
+             */
+
+            const productUrl =
+                body.product_url ||
+                body.productUrl ||
+                "";
+
+
+            const targetPrice =
+                body.target_price ??
+                body.targetPrice;
+
+
+            const productName =
+                body.product_name ||
+                body.productName ||
+                null;
+
+
+            let store =
+                body.store ||
+                "";
+
+
+            /* =========================
+               DETECT STORE FROM URL
+               ========================= */
+
+            if (!store && productUrl) {
+
+                try {
+
+                    const parsedUrl =
+                        new URL(productUrl);
+
+                    const hostname =
+                        parsedUrl.hostname
+                            .toLowerCase()
+                            .replace(
+                                /^www\./,
+                                ""
+                            );
+
+
+                    if (
+                        hostname === "amazon.in" ||
+                        hostname.endsWith(".amazon.in") ||
+                        hostname === "amazon.com" ||
+                        hostname.endsWith(".amazon.com") ||
+                        hostname === "link.amazon"
+                    ) {
+
+                        store = "Amazon";
+
+                    } else if (
+                        hostname === "flipkart.com" ||
+                        hostname.endsWith(".flipkart.com")
+                    ) {
+
+                        store = "Flipkart";
+
+                    }
+
+                } catch (error) {
+
+                    return res.status(400).json({
+
+                        success: false,
+
+                        message:
+                            "Invalid product URL"
+
+                    });
+
+                }
+
+            }
 
 
             if (
-                !product_url ||
-                !store ||
-                target_price === undefined
+                !productUrl ||
+                targetPrice === undefined ||
+                targetPrice === null
             ) {
 
                 return res.status(400).json({
+
                     success: false,
+
                     message:
-                        "product_url, store and target_price are required"
+                        "Product URL and target price are required"
+
                 });
 
             }
@@ -202,16 +310,19 @@ export default async function handler(req, res) {
             ) {
 
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         "Only Amazon or Flipkart is supported"
+
                 });
 
             }
 
 
             const numericTarget =
-                Number(target_price);
+                Number(targetPrice);
 
 
             if (
@@ -222,18 +333,26 @@ export default async function handler(req, res) {
             ) {
 
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         "Invalid target price"
+
                 });
 
             }
 
 
+            /* =========================
+               SAVE ALERT
+               ========================= */
+
             const response =
                 await fetch(
                     `${SUPABASE_URL}/rest/v1/price_alerts`,
                     {
+
                         method: "POST",
 
                         headers: {
@@ -249,6 +368,7 @@ export default async function handler(req, res) {
 
                             Prefer:
                                 "return=representation"
+
                         },
 
                         body:
@@ -258,11 +378,10 @@ export default async function handler(req, res) {
                                     user.id,
 
                                 product_name:
-                                    product_name ||
-                                    null,
+                                    productName,
 
                                 product_url:
-                                    product_url,
+                                    productUrl,
 
                                 store:
                                     store,
@@ -274,6 +393,7 @@ export default async function handler(req, res) {
                                     true
 
                             })
+
                     }
                 );
 
@@ -287,11 +407,15 @@ export default async function handler(req, res) {
                 return res.status(
                     response.status
                 ).json({
+
                     success: false,
+
                     message:
                         "Unable to create price alert",
+
                     error:
                         data
+
                 });
 
             }
@@ -309,25 +433,29 @@ export default async function handler(req, res) {
         }
 
 
-        // =========================
-        // UPDATE ALERT
-        // =========================
+        /* =========================
+           UPDATE ALERT
+           ========================= */
 
         if (req.method === "PATCH") {
 
-            const {
-                id,
-                target_price,
-                is_active
-            } = req.body || {};
+            const body =
+                req.body || {};
+
+
+            const id =
+                body.id;
 
 
             if (!id) {
 
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         "Alert id is required"
+
                 });
 
             }
@@ -337,11 +465,15 @@ export default async function handler(req, res) {
 
 
             if (
-                target_price !== undefined
+                body.target_price !== undefined ||
+                body.targetPrice !== undefined
             ) {
 
                 const numericTarget =
-                    Number(target_price);
+                    Number(
+                        body.target_price ??
+                        body.targetPrice
+                    );
 
 
                 if (
@@ -352,9 +484,12 @@ export default async function handler(req, res) {
                 ) {
 
                     return res.status(400).json({
+
                         success: false,
+
                         message:
                             "Invalid target price"
+
                     });
 
                 }
@@ -362,15 +497,18 @@ export default async function handler(req, res) {
 
                 updates.target_price =
                     numericTarget;
+
             }
 
 
             if (
-                is_active !== undefined
+                body.is_active !== undefined
             ) {
 
                 updates.is_active =
-                    Boolean(is_active);
+                    Boolean(
+                        body.is_active
+                    );
 
             }
 
@@ -381,8 +519,9 @@ export default async function handler(req, res) {
 
             const response =
                 await fetch(
-                    `${SUPABASE_URL}/rest/v1/price_alerts?id=eq.${encodeURIComponent(id)}&user_id=eq.${user.id}`,
+                    `${SUPABASE_URL}/rest/v1/price_alerts?id=eq.${encodeURIComponent(id)}&user_id=eq.${encodeURIComponent(user.id)}`,
                     {
+
                         method: "PATCH",
 
                         headers: {
@@ -398,12 +537,14 @@ export default async function handler(req, res) {
 
                             Prefer:
                                 "return=representation"
+
                         },
 
                         body:
                             JSON.stringify(
                                 updates
                             )
+
                     }
                 );
 
@@ -417,11 +558,15 @@ export default async function handler(req, res) {
                 return res.status(
                     response.status
                 ).json({
+
                     success: false,
+
                     message:
                         "Unable to update alert",
+
                     error:
                         data
+
                 });
 
             }
@@ -439,9 +584,9 @@ export default async function handler(req, res) {
         }
 
 
-        // =========================
-        // DELETE ALERT
-        // =========================
+        /* =========================
+           DELETE ALERT
+           ========================= */
 
         if (req.method === "DELETE") {
 
@@ -461,9 +606,12 @@ export default async function handler(req, res) {
             if (!id) {
 
                 return res.status(400).json({
+
                     success: false,
+
                     message:
                         "Alert id is required"
+
                 });
 
             }
@@ -471,8 +619,9 @@ export default async function handler(req, res) {
 
             const response =
                 await fetch(
-                    `${SUPABASE_URL}/rest/v1/price_alerts?id=eq.${encodeURIComponent(id)}&user_id=eq.${user.id}`,
+                    `${SUPABASE_URL}/rest/v1/price_alerts?id=eq.${encodeURIComponent(id)}&user_id=eq.${encodeURIComponent(user.id)}`,
                     {
+
                         method: "DELETE",
 
                         headers: {
@@ -485,7 +634,9 @@ export default async function handler(req, res) {
 
                             Prefer:
                                 "return=representation"
+
                         }
+
                     }
                 );
 
@@ -499,11 +650,15 @@ export default async function handler(req, res) {
                 return res.status(
                     response.status
                 ).json({
+
                     success: false,
+
                     message:
                         "Unable to delete alert",
+
                     error:
                         data
+
                 });
 
             }
@@ -520,6 +675,10 @@ export default async function handler(req, res) {
 
         }
 
+
+        /* =========================
+           METHOD NOT ALLOWED
+           ========================= */
 
         return res.status(405).json({
 
