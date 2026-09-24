@@ -94,6 +94,8 @@ const mobileMenuBtn =
 
 const mainNav =
     document.querySelector(".main-nav");
+
+
 /* ================= API AUTH ================= */
 
 async function getAuthHeaders() {
@@ -139,14 +141,26 @@ async function getAuthHeaders() {
     }
 }
 
+
 /* ================= HELPERS ================= */
 
 function formatPrice(value) {
 
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    ) {
+        return "₹—";
+    }
+
     const number =
         Number(value);
 
-    if (Number.isNaN(number)) {
+    if (
+        Number.isNaN(number) ||
+        !Number.isFinite(number)
+    ) {
         return "₹—";
     }
 
@@ -212,23 +226,21 @@ function detectStore(url) {
                 .replace(/^www\./, "");
 
         if (
-    hostname === "amazon.in" ||
-    hostname.endsWith(".amazon.in") ||
-    hostname === "amazon.com" ||
-    hostname.endsWith(".amazon.com") ||
-    hostname === "link.amazon"
-) {
-    return "amazon";
-}
+            hostname === "amazon.in" ||
+            hostname.endsWith(".amazon.in") ||
+            hostname === "amazon.com" ||
+            hostname.endsWith(".amazon.com") ||
+            hostname === "link.amazon"
+        ) {
+            return "amazon";
+        }
 
 
         if (
             hostname === "flipkart.com" ||
             hostname.endsWith(".flipkart.com")
         ) {
-
             return "flipkart";
-
         }
 
 
@@ -260,28 +272,83 @@ function isValidProductUrl(url) {
 function createProductData(
     store,
     url,
-    savedProduct = null
+    savedProduct = null,
+    useDemo = false
 ) {
+
+    /* ---------- DEMO DATA ---------- */
+
+    if (useDemo) {
+
+        const data =
+            demoData[store];
+
+        if (!data) {
+            return null;
+        }
+
+        return {
+
+            store:
+                data.store,
+
+            productName:
+                data.productName,
+
+            currentPrice:
+                data.currentPrice,
+
+            lowestPrice:
+                data.lowestPrice,
+
+            history:
+                data.history,
+
+            url:
+                url,
+
+            updatedAt:
+                new Date().toLocaleString(
+                    "en-IN",
+                    {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    }
+                )
+
+        };
+
+    }
+
+
+    /* ---------- REAL TRACKED PRODUCT ---------- */
 
     const storeName =
         store === "amazon"
             ? "Amazon"
             : "Flipkart";
 
+
     const productName =
         savedProduct?.product_name ||
         savedProduct?.productName ||
         "Tracked Product";
+
 
     const currentPrice =
         savedProduct?.current_price ??
         savedProduct?.currentPrice ??
         null;
 
+
     const lowestPrice =
         savedProduct?.lowest_price ??
         savedProduct?.lowestPrice ??
         null;
+
 
     return {
 
@@ -363,7 +430,6 @@ function renderTracker(product) {
 
         trackerProductUrl.textContent =
             product.url;
-            
 
     }
 
@@ -453,14 +519,39 @@ function renderPriceHistory(history) {
         !Array.isArray(history) ||
         history.length === 0
     ) {
+
         priceChart.innerHTML =
             "<p>No price history available.</p>";
+
         return;
     }
 
-    const prices = history.map(
-        item => Number(item.price)
-    );
+
+    const validHistory =
+        history.filter(
+            item =>
+                item &&
+                Number.isFinite(
+                    Number(item.price)
+                )
+        );
+
+
+    if (validHistory.length === 0) {
+
+        priceChart.innerHTML =
+            "<p>No price history available.</p>";
+
+        return;
+    }
+
+
+    const prices =
+        validHistory.map(
+            item =>
+                Number(item.price)
+        );
+
 
     const width = 700;
     const height = 300;
@@ -492,34 +583,50 @@ function renderPriceHistory(history) {
 
     /* ================= POINTS ================= */
 
-    const points = history.map(
-        (item, index) => {
+    const points =
+        validHistory.map(
+            (item, index) => {
 
-            const x =
-                paddingLeft +
-                (
-                    index /
-                    Math.max(history.length - 1, 1)
-                ) *
-                chartWidth;
+                const x =
+                    paddingLeft +
+                    (
+                        index /
+                        Math.max(
+                            validHistory.length - 1,
+                            1
+                        )
+                    ) *
+                    chartWidth;
 
-            const y =
-                paddingTop +
-                (
-                    (maxPrice - Number(item.price)) /
-                    range
-                ) *
-                chartHeight;
 
-            return {
-                x,
-                y,
-                price: Number(item.price),
-                date: item.date
-            };
+                const y =
+                    paddingTop +
+                    (
+                        (maxPrice -
+                            Number(item.price)) /
+                        range
+                    ) *
+                    chartHeight;
 
-        }
-    );
+
+                return {
+
+                    x,
+
+                    y,
+
+                    price:
+                        Number(item.price),
+
+                    date:
+                        item.date ||
+                        item.recorded_at ||
+                        ""
+
+                };
+
+            }
+        );
 
 
     /* ================= SVG ================= */
@@ -527,29 +634,35 @@ function renderPriceHistory(history) {
     const svgNS =
         "http://www.w3.org/2000/svg";
 
+
     const svg =
         document.createElementNS(
             svgNS,
             "svg"
         );
 
+
     svg.setAttribute(
         "viewBox",
         `0 0 ${width} ${height}`
     );
+
 
     svg.setAttribute(
         "width",
         "100%"
     );
 
+
     svg.setAttribute(
         "height",
         "300"
     );
 
+
     svg.style.display =
         "block";
+
 
     svg.style.overflow =
         "visible";
@@ -563,43 +676,53 @@ function renderPriceHistory(history) {
             paddingTop +
             (chartHeight / 4) * i;
 
+
         const line =
             document.createElementNS(
                 svgNS,
                 "line"
             );
 
+
         line.setAttribute(
             "x1",
             paddingLeft
         );
+
 
         line.setAttribute(
             "x2",
             width - paddingRight
         );
 
+
         line.setAttribute(
             "y1",
             y
         );
+
 
         line.setAttribute(
             "y2",
             y
         );
 
+
         line.setAttribute(
             "stroke",
             "rgba(148,163,184,0.20)"
         );
+
 
         line.setAttribute(
             "stroke-width",
             "1"
         );
 
-        svg.appendChild(line);
+
+        svg.appendChild(
+            line
+        );
 
 
         /* Y-axis price */
@@ -610,38 +733,47 @@ function renderPriceHistory(history) {
                 range / 4
             ) * i;
 
+
         const text =
             document.createElementNS(
                 svgNS,
                 "text"
             );
 
+
         text.setAttribute(
             "x",
             8
         );
+
 
         text.setAttribute(
             "y",
             y + 4
         );
 
+
         text.setAttribute(
             "fill",
             "#94a3b8"
         );
+
 
         text.setAttribute(
             "font-size",
             "12"
         );
 
+
         text.textContent =
             formatPrice(
                 Math.round(priceValue)
             );
 
-        svg.appendChild(text);
+
+        svg.appendChild(
+            text
+        );
 
     }
 
@@ -663,37 +795,46 @@ function renderPriceHistory(history) {
             "path"
         );
 
+
     path.setAttribute(
         "d",
         pathData
     );
+
 
     path.setAttribute(
         "fill",
         "none"
     );
 
+
     path.setAttribute(
         "stroke",
         "#60a5fa"
     );
+
 
     path.setAttribute(
         "stroke-width",
         "4"
     );
 
+
     path.setAttribute(
         "stroke-linecap",
         "round"
     );
+
 
     path.setAttribute(
         "stroke-linejoin",
         "round"
     );
 
-    svg.appendChild(path);
+
+    svg.appendChild(
+        path
+    );
 
 
     /* ================= POINTS + LABELS ================= */
@@ -707,37 +848,46 @@ function renderPriceHistory(history) {
                     "circle"
                 );
 
+
             circle.setAttribute(
                 "cx",
                 point.x
             );
+
 
             circle.setAttribute(
                 "cy",
                 point.y
             );
 
+
             circle.setAttribute(
                 "r",
                 "5"
             );
+
 
             circle.setAttribute(
                 "fill",
                 "#60a5fa"
             );
 
+
             circle.setAttribute(
                 "stroke",
                 "#ffffff"
             );
+
 
             circle.setAttribute(
                 "stroke-width",
                 "2"
             );
 
-            svg.appendChild(circle);
+
+            svg.appendChild(
+                circle
+            );
 
 
             /* Price label */
@@ -748,42 +898,52 @@ function renderPriceHistory(history) {
                     "text"
                 );
 
+
             priceText.setAttribute(
                 "x",
                 point.x
             );
+
 
             priceText.setAttribute(
                 "y",
                 point.y - 12
             );
 
+
             priceText.setAttribute(
                 "text-anchor",
                 "middle"
             );
+
 
             priceText.setAttribute(
                 "fill",
                 "#e2e8f0"
             );
 
+
             priceText.setAttribute(
                 "font-size",
                 "11"
             );
+
 
             priceText.setAttribute(
                 "font-weight",
                 "600"
             );
 
+
             priceText.textContent =
                 formatPrice(
                     point.price
                 );
 
-            svg.appendChild(priceText);
+
+            svg.appendChild(
+                priceText
+            );
 
 
             /* Date label */
@@ -794,61 +954,77 @@ function renderPriceHistory(history) {
                     "text"
                 );
 
+
             dateText.setAttribute(
                 "x",
                 point.x
             );
+
 
             dateText.setAttribute(
                 "y",
                 height - 18
             );
 
+
             dateText.setAttribute(
                 "text-anchor",
                 "middle"
             );
+
 
             dateText.setAttribute(
                 "fill",
                 "#94a3b8"
             );
 
+
             dateText.setAttribute(
                 "font-size",
                 "11"
             );
 
+
             dateText.textContent =
                 point.date;
 
-            svg.appendChild(dateText);
+
+            svg.appendChild(
+                dateText
+            );
 
         }
     );
 
 
-    priceChart.appendChild(svg);
+    priceChart.appendChild(
+        svg
+    );
 
 }
+
+
 /* ================= LOAD PRICE HISTORY ================= */
 
 async function loadPriceHistory(productUrl) {
 
     if (!productUrl) {
-        return;
+        return null;
     }
+
 
     try {
 
         const authHeaders =
             await getAuthHeaders();
 
+
         const headers =
             authHeaders || {
                 "Content-Type":
                     "application/json"
             };
+
 
         const response =
             await fetch(
@@ -859,8 +1035,10 @@ async function loadPriceHistory(productUrl) {
                 }
             );
 
+
         const result =
             await response.json();
+
 
         if (
             response.ok &&
@@ -872,14 +1050,54 @@ async function loadPriceHistory(productUrl) {
                 result.history
             );
 
+
+            /* Update local saved product */
+
+            const savedProduct =
+                getStoredProduct();
+
+
+            if (
+                savedProduct &&
+                savedProduct.url === productUrl
+            ) {
+
+                savedProduct.history =
+                    result.history;
+
+
+                try {
+
+                    localStorage.setItem(
+                        "priceNazarTrackedProduct",
+                        JSON.stringify(
+                            savedProduct
+                        )
+                    );
+
+                } catch (storageError) {
+
+                    console.warn(
+                        "Could not update stored history:",
+                        storageError
+                    );
+
+                }
+
+            }
+
+
             return result;
 
         }
 
+
         console.warn(
             "Price history unavailable:",
-            result.message || "Unknown error"
+            result.message ||
+            "Unknown error"
         );
+
 
     } catch (error) {
 
@@ -890,8 +1108,11 @@ async function loadPriceHistory(productUrl) {
 
     }
 
+
     return null;
+
 }
+
 
 /* ================= TRACK PRODUCT ================= */
 
@@ -953,7 +1174,8 @@ async function trackProduct() {
 
     try {
 
-        // Get logged-in user's session
+        /* Get logged-in user's session */
+
         const authHeaders =
             await getAuthHeaders();
 
@@ -991,10 +1213,17 @@ async function trackProduct() {
             result.success
         ) {
 
+            /*
+             * IMPORTANT:
+             * Use the product returned by the API.
+             * Do not use demoData here.
+             */
+
             const product =
                 createProductData(
                     store,
-                    url
+                    url,
+                    result.product
                 );
 
 
@@ -1009,7 +1238,8 @@ async function trackProduct() {
             );
 
 
-            // Load saved price history
+            /* Load saved price history */
+
             await loadPriceHistory(
                 url
             );
@@ -1034,17 +1264,18 @@ async function trackProduct() {
 
 
         /*
-         * Demo fallback.
-         * Real Amazon/Flipkart price data
-         * will be connected after authorized
-         * store API access is available.
+         * Do NOT use result.product here.
+         *
+         * result exists only inside the try block.
+         *
+         * We show a safe local product instead of
+         * displaying fake Amazon/Flipkart prices.
          */
 
         const product =
             createProductData(
                 store,
-                url,
-                result.product
+                url
             );
 
 
@@ -1054,8 +1285,8 @@ async function trackProduct() {
 
 
         showSearchStatus(
-            "Product added in demo mode. Real store price data will be connected through authorized APIs.",
-            "info"
+            "Unable to connect to the tracking service. Please try again.",
+            "error"
         );
 
     }
@@ -1076,7 +1307,6 @@ async function trackProduct() {
     }
 
 }
-            
 
 
 /* ================= DEMO PRODUCT ================= */
@@ -1087,8 +1317,10 @@ window.demoProduct =
         let store =
             "amazon";
 
+
         let url =
             "https://www.amazon.in/";
+
 
         if (
             productName
@@ -1098,6 +1330,7 @@ window.demoProduct =
 
             store =
                 "flipkart";
+
 
             url =
                 "https://www.flipkart.com/";
@@ -1116,15 +1349,24 @@ window.demoProduct =
         const product =
             createProductData(
                 store,
-                url
+                url,
+                null,
+                true
             );
+
+
+        if (!product) {
+            return;
+        }
 
 
         product.productName =
             productName;
 
 
-        renderTracker(product);
+        renderTracker(
+            product
+        );
 
 
         showSearchStatus(
@@ -1165,7 +1407,10 @@ async function savePriceAlert() {
         getStoredProduct();
 
 
-    if (!savedProduct || !savedProduct.url) {
+    if (
+        !savedProduct ||
+        !savedProduct.url
+    ) {
 
         if (alertStatus) {
 
@@ -1226,21 +1471,23 @@ async function savePriceAlert() {
                         authHeaders,
 
                     body:
-    JSON.stringify({
+                        JSON.stringify({
 
-        target_price:
-            value,
+                            target_price:
+                                value,
 
-        product_url:
-            savedProduct.url,
+                            product_url:
+                                savedProduct.url,
 
-        product_name:
-            savedProduct.productName || "",
+                            product_name:
+                                savedProduct.productName ||
+                                "",
 
-        store:
-            savedProduct.store || ""
+                            store:
+                                savedProduct.store ||
+                                ""
 
-    })
+                        })
                 }
             );
 
@@ -1282,7 +1529,9 @@ async function savePriceAlert() {
 
             localStorage.setItem(
                 "priceNazarAlert",
-                JSON.stringify(alertData)
+                JSON.stringify(
+                    alertData
+                )
             );
 
         } catch (storageError) {
@@ -1368,7 +1617,9 @@ function restoreTracker() {
 
     if (product) {
 
-        renderTracker(product);
+        renderTracker(
+            product
+        );
 
     }
 
@@ -1414,10 +1665,12 @@ function restoreAlert() {
                     alertData.targetPrice
                 )}`;
 
+
             alertStatus.style.color =
                 "#16a34a";
 
         }
+
 
     } catch (error) {
 
@@ -1455,8 +1708,10 @@ if (mobileMenuBtn) {
                     "mobile-open"
                 );
 
+
                 mainNav.style.display =
                     "";
+
 
             } else {
 
@@ -1464,41 +1719,54 @@ if (mobileMenuBtn) {
                     "mobile-open"
                 );
 
+
                 mainNav.style.display =
                     "flex";
+
 
                 mainNav.style.position =
                     "absolute";
 
+
                 mainNav.style.top =
                     "64px";
+
 
                 mainNav.style.left =
                     "14px";
 
+
                 mainNav.style.right =
                     "14px";
+
 
                 mainNav.style.padding =
                     "15px";
 
+
                 mainNav.style.background =
                     "#ffffff";
+
 
                 mainNav.style.border =
                     "1px solid #e5e7eb";
 
+
                 mainNav.style.borderRadius =
                     "14px";
+
 
                 mainNav.style.flexDirection =
                     "column";
 
+
                 mainNav.style.alignItems =
                     "flex-start";
 
+
                 mainNav.style.gap =
                     "15px";
+
 
                 mainNav.style.boxShadow =
                     "0 15px 35px rgba(15,23,42,.12)";
