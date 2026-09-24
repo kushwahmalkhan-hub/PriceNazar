@@ -7,113 +7,457 @@ export default async function handler(req, res) {
 
     res.setHeader(
         "Access-Control-Allow-Methods",
-        "GET, OPTIONS"
+        "GET, POST, OPTIONS"
     );
 
     res.setHeader(
         "Access-Control-Allow-Headers",
-        "Content-Type"
+        "Content-Type, Authorization"
     );
 
 
     if (req.method === "OPTIONS") {
-
         return res.status(200).end();
-
-    }
-
-
-    if (req.method !== "GET") {
-
-        return res.status(405).json({
-            success: false,
-            message: "Only GET request is allowed"
-        });
-
     }
 
 
     try {
 
-        /*
-         * Demo price history.
-         *
-         * Real history will be connected
-         * with authorized store APIs later.
-         */
+        const SUPABASE_URL =
+            process.env.SUPABASE_URL;
 
-        const history = [
+        const SUPABASE_KEY =
+            process.env.SUPABASE_PUBLISHABLE_KEY;
 
-            {
-                date: "Sep 16",
-                price: 31999
-            },
 
-            {
-                date: "Sep 17",
-                price: 30999
-            },
+        if (
+            !SUPABASE_URL ||
+            !SUPABASE_KEY
+        ) {
 
-            {
-                date: "Sep 18",
-                price: 30499
-            },
+            return res.status(500).json({
 
-            {
-                date: "Sep 19",
-                price: 29999
-            },
+                success: false,
 
-            {
-                date: "Sep 20",
-                price: 29499
-            },
+                message:
+                    "Supabase environment variables are missing"
 
-            {
-                date: "Sep 21",
-                price: 28999
-            },
+            });
 
-            {
-                date: "Sep 22",
-                price: 29999
+        }
+
+
+        // =========================
+        // AUTHENTICATION
+        // =========================
+
+        const authHeader =
+            req.headers.authorization || "";
+
+
+        if (
+            !authHeader.startsWith("Bearer ")
+        ) {
+
+            return res.status(401).json({
+
+                success: false,
+
+                message:
+                    "Authentication required"
+
+            });
+
+        }
+
+
+        const token =
+            authHeader.replace(
+                "Bearer ",
+                ""
+            );
+
+
+        // =========================
+        // VERIFY USER
+        // =========================
+
+        const userResponse =
+            await fetch(
+                `${SUPABASE_URL}/auth/v1/user`,
+                {
+
+                    headers: {
+
+                        apikey:
+                            SUPABASE_KEY,
+
+                        Authorization:
+                            `Bearer ${token}`
+
+                    }
+
+                }
+            );
+
+
+        if (!userResponse.ok) {
+
+            return res.status(401).json({
+
+                success: false,
+
+                message:
+                    "Invalid or expired session"
+
+            });
+
+        }
+
+
+        const user =
+            await userResponse.json();
+
+
+        if (!user?.id) {
+
+            return res.status(401).json({
+
+                success: false,
+
+                message:
+                    "User not found"
+
+            });
+
+        }
+
+
+        // =========================
+        // GET PRICE HISTORY
+        // =========================
+
+        if (req.method === "GET") {
+
+            const requestUrl =
+                new URL(
+                    req.url,
+                    "https://price-nazar.vercel.app"
+                );
+
+
+            const productUrl =
+                requestUrl.searchParams.get(
+                    "product_url"
+                );
+
+
+            if (!productUrl) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "product_url is required"
+
+                });
+
             }
 
-        ];
+
+            const query =
+                new URLSearchParams({
+
+                    user_id:
+                        `eq.${user.id}`,
+
+                    product_url:
+                        `eq.${productUrl}`,
+
+                    order:
+                        "recorded_at.asc"
+
+                });
 
 
-        const lowestPrice =
-            Math.min(
-                ...history.map(
+            const response =
+                await fetch(
+                    `${SUPABASE_URL}/rest/v1/price_history?${query}`,
+                    {
+
+                        headers: {
+
+                            apikey:
+                                SUPABASE_KEY,
+
+                            Authorization:
+                                `Bearer ${token}`
+
+                        }
+
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                return res.status(
+                    response.status
+                ).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to fetch price history",
+
+                    error:
+                        data
+
+                });
+
+            }
+
+
+            // Convert database format
+            // to PriceNazar chart format
+
+            const history =
+                data.map(item => ({
+
+                    date:
+                        new Date(
+                            item.recorded_at
+                        ).toLocaleDateString(
+                            "en-IN",
+                            {
+                                day: "2-digit",
+                                month: "short"
+                            }
+                        ),
+
+                    price:
+                        Number(item.price)
+
+                }));
+
+
+            const prices =
+                history.map(
                     item => item.price
-                )
-            );
+                );
 
 
-        const highestPrice =
-            Math.max(
-                ...history.map(
-                    item => item.price
-                )
-            );
+            const lowestPrice =
+                prices.length
+                    ? Math.min(...prices)
+                    : null;
 
 
-        return res.status(200).json({
+            const highestPrice =
+                prices.length
+                    ? Math.max(...prices)
+                    : null;
 
-            success: true,
 
-            mode: "demo",
+            return res.status(200).json({
 
-            currency: "INR",
+                success: true,
 
-            lowestPrice:
-                lowestPrice,
+                mode: "live",
 
-            highestPrice:
-                highestPrice,
+                currency: "INR",
 
-            history:
-                history
+                lowestPrice:
+                    lowestPrice,
+
+                highestPrice:
+                    highestPrice,
+
+                history:
+                    history
+
+            });
+
+        }
+
+
+        // =========================
+        // SAVE PRICE HISTORY
+        // =========================
+
+        if (req.method === "POST") {
+
+            const {
+
+                product_name,
+
+                product_url,
+
+                store,
+
+                price
+
+            } = req.body || {};
+
+
+            if (
+                !product_url ||
+                !store ||
+                price === undefined
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "product_url, store and price are required"
+
+                });
+
+            }
+
+
+            if (
+                store !== "Amazon" &&
+                store !== "Flipkart"
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Only Amazon or Flipkart is supported"
+
+                });
+
+            }
+
+
+            const numericPrice =
+                Number(price);
+
+
+            if (
+                !Number.isFinite(
+                    numericPrice
+                ) ||
+                numericPrice < 0
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Invalid price"
+
+                });
+
+            }
+
+
+            const response =
+                await fetch(
+                    `${SUPABASE_URL}/rest/v1/price_history`,
+                    {
+
+                        method: "POST",
+
+                        headers: {
+
+                            apikey:
+                                SUPABASE_KEY,
+
+                            Authorization:
+                                `Bearer ${token}`,
+
+                            "Content-Type":
+                                "application/json",
+
+                            Prefer:
+                                "return=representation"
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                user_id:
+                                    user.id,
+
+                                product_name:
+                                    product_name ||
+                                    null,
+
+                                product_url:
+                                    product_url,
+
+                                store:
+                                    store,
+
+                                price:
+                                    numericPrice
+
+                            })
+
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                return res.status(
+                    response.status
+                ).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to save price history",
+
+                    error:
+                        data
+
+                });
+
+            }
+
+
+            return res.status(201).json({
+
+                success: true,
+
+                mode: "live",
+
+                history:
+                    data
+
+            });
+
+        }
+
+
+        // =========================
+        // METHOD NOT ALLOWED
+        // =========================
+
+        return res.status(405).json({
+
+            success: false,
+
+            message:
+                "Method not allowed"
 
         });
 
@@ -131,7 +475,7 @@ export default async function handler(req, res) {
             success: false,
 
             message:
-                "Unable to load price history"
+                "Unable to process price history"
 
         });
 
