@@ -259,30 +259,53 @@ function isValidProductUrl(url) {
 
 function createProductData(
     store,
-    url
+    url,
+    savedProduct = null
 ) {
 
-    const data =
-        demoData[store];
+    const storeName =
+        store === "amazon"
+            ? "Amazon"
+            : "Flipkart";
+
+    const productName =
+        savedProduct?.product_name ||
+        savedProduct?.productName ||
+        "Tracked Product";
+
+    const currentPrice =
+        savedProduct?.current_price ??
+        savedProduct?.currentPrice ??
+        null;
+
+    const lowestPrice =
+        savedProduct?.lowest_price ??
+        savedProduct?.lowestPrice ??
+        null;
 
     return {
 
         store:
-            data.store,
+            savedProduct?.store ||
+            storeName,
 
         productName:
-            data.productName,
+            productName,
 
         currentPrice:
-            data.currentPrice,
+            currentPrice,
 
         lowestPrice:
-            data.lowestPrice,
+            lowestPrice,
 
         history:
-            data.history,
+            Array.isArray(savedProduct?.history)
+                ? savedProduct.history
+                : [],
 
         url:
+            savedProduct?.product_url ||
+            savedProduct?.url ||
             url,
 
         updatedAt:
@@ -340,6 +363,7 @@ function renderTracker(product) {
 
         trackerProductUrl.textContent =
             product.url;
+            
 
     }
 
@@ -1019,7 +1043,8 @@ async function trackProduct() {
         const product =
             createProductData(
                 store,
-                url
+                url,
+                result.product
             );
 
 
