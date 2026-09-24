@@ -147,9 +147,12 @@ export default async function handler(req, res) {
 
 
             const productUrl =
-                requestUrl.searchParams.get(
-                    "product_url"
-                );
+    requestUrl.searchParams.get(
+        "product_url"
+    ) ||
+    requestUrl.searchParams.get(
+        "url"
+    );
 
 
             if (!productUrl) {
