@@ -828,7 +828,7 @@ async function loadPriceHistory(productUrl) {
 
         const response =
             await fetch(
-                `/api/history?url=${encodeURIComponent(productUrl)}`,
+                `/api/history?product_url=${encodeURIComponent(productUrl)}`
                 {
                     method: "GET",
                     headers: headers
