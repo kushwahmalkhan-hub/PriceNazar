@@ -1,27 +1,56 @@
 export default async function handler(req, res) {
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    /* =========================
+       CORS
+       ========================= */
+
+    res.setHeader(
+        "Access-Control-Allow-Origin",
+        "*"
+    );
+
+    res.setHeader(
+        "Access-Control-Allow-Methods",
+        "POST, OPTIONS"
+    );
+
     res.setHeader(
         "Access-Control-Allow-Headers",
         "Content-Type, Authorization"
     );
 
+
+    /* =========================
+       OPTIONS
+       ========================= */
+
     if (req.method === "OPTIONS") {
         return res.status(200).end();
     }
 
+
+    /* =========================
+       ONLY POST
+       ========================= */
+
     if (req.method !== "POST") {
+
         return res.status(405).json({
+
             success: false,
-            message: "Only POST request is allowed"
+
+            message:
+                "Only POST request is allowed"
+
         });
+
     }
+
 
     try {
 
         /* =========================
-           SUPABASE CONFIG
+           ENVIRONMENT VARIABLES
            ========================= */
 
         const SUPABASE_URL =
@@ -34,18 +63,38 @@ export default async function handler(req, res) {
             process.env.RAPIDAPI_KEY;
 
 
-        if (!SUPABASE_URL || !SUPABASE_KEY) {
+        /* =========================
+           CHECK ENVIRONMENT
+           ========================= */
+
+        if (
+            !SUPABASE_URL ||
+            !SUPABASE_KEY
+        ) {
+
             return res.status(500).json({
+
                 success: false,
-                message: "Supabase environment variables are missing"
+
+                message:
+                    "Supabase environment variables are missing"
+
             });
+
         }
 
+
         if (!RAPIDAPI_KEY) {
+
             return res.status(500).json({
+
                 success: false,
-                message: "RapidAPI key is missing"
+
+                message:
+                    "RapidAPI key is missing"
+
             });
+
         }
 
 
@@ -56,46 +105,90 @@ export default async function handler(req, res) {
         const authHeader =
             req.headers.authorization || "";
 
-        if (!authHeader.startsWith("Bearer ")) {
+
+        if (
+            !authHeader.startsWith("Bearer ")
+        ) {
+
             return res.status(401).json({
+
                 success: false,
-                message: "Please login to track products"
+
+                message:
+                    "Please login to track products"
+
             });
+
         }
 
+
         const token =
-            authHeader.replace("Bearer ", "");
+            authHeader.replace(
+                "Bearer ",
+                ""
+            );
 
 
         /* =========================
-           VERIFY USER
+           VERIFY SUPABASE USER
            ========================= */
 
-        const userResponse = await fetch(
-            `${SUPABASE_URL}/auth/v1/user`,
-            {
-                headers: {
-                    apikey: SUPABASE_KEY,
-                    Authorization: `Bearer ${token}`
+        const userResponse =
+            await fetch(
+                `${SUPABASE_URL}/auth/v1/user`,
+                {
+
+                    headers: {
+
+                        apikey:
+                            SUPABASE_KEY,
+
+                        Authorization:
+                            `Bearer ${token}`
+
+                    }
+
                 }
-            }
-        );
+            );
+
 
         if (!userResponse.ok) {
+
+            const authError =
+                await userResponse.text();
+
+            console.error(
+                "Supabase auth error:",
+                authError
+            );
+
             return res.status(401).json({
+
                 success: false,
-                message: "Invalid or expired session"
+
+                message:
+                    "Invalid or expired session"
+
             });
+
         }
+
 
         const user =
             await userResponse.json();
 
+
         if (!user?.id) {
+
             return res.status(401).json({
+
                 success: false,
-                message: "User not found"
+
+                message:
+                    "User not found"
+
             });
+
         }
 
 
@@ -109,12 +202,27 @@ export default async function handler(req, res) {
             productName
         } = req.body || {};
 
+
         if (!url) {
+
             return res.status(400).json({
+
                 success: false,
-                message: "Product URL is required"
+
+                message:
+                    "Product URL is required"
+
             });
+
         }
+
+
+        /* =========================
+           CLEAN URL
+           ========================= */
+
+        const productUrl =
+            String(url).trim();
 
 
         /* =========================
@@ -123,15 +231,23 @@ export default async function handler(req, res) {
 
         let store = null;
 
+
         try {
 
             const parsedUrl =
-                new URL(url);
+                new URL(productUrl);
+
 
             const hostname =
                 parsedUrl.hostname
                     .toLowerCase()
-                    .replace(/^www\./, "");
+                    .replace(
+                        /^www\./,
+                        ""
+                    );
+
+
+            /* AMAZON */
 
             if (
                 hostname === "amazon.in" ||
@@ -140,35 +256,63 @@ export default async function handler(req, res) {
                 hostname.endsWith(".amazon.com") ||
                 hostname === "link.amazon"
             ) {
+
                 store = "Amazon";
+
             }
+
+
+            /* FLIPKART */
 
             if (
                 hostname === "flipkart.com" ||
                 hostname.endsWith(".flipkart.com")
             ) {
+
                 store = "Flipkart";
+
             }
+
 
         } catch (error) {
 
-            return res.status(400).json({
-                success: false,
-                message: "Invalid product URL"
-            });
-        }
+            console.error(
+                "URL parsing error:",
+                error
+            );
 
-
-        if (!store) {
             return res.status(400).json({
+
                 success: false,
-                message: "Only Amazon or Flipkart URL is supported"
+
+                message:
+                    "Invalid product URL"
+
             });
+
         }
 
 
         /* =========================
-           PRODUCT DATA
+           STORE VALIDATION
+           ========================= */
+
+        if (!store) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Only Amazon or Flipkart URL is supported"
+
+            });
+
+        }
+
+
+        /* =========================
+           PRODUCT VARIABLES
            ========================= */
 
         let fetchedProductName =
@@ -177,44 +321,78 @@ export default async function handler(req, res) {
             null;
 
         let currentPrice = null;
+
         let lowestPrice = null;
+
         let imageUrl = null;
 
 
-        /* =========================
-           FLIPKART RAPIDAPI
-           ========================= */
+        /* =====================================================
+           FLIPKART - RAPIDAPI / REEFAPI
+           ===================================================== */
 
         if (store === "Flipkart") {
 
-            const rapidResponse = await fetch(
-                "https://flipkart-product-data-api.p.rapidapi.com/flipkart/v1/product",
-                {
-                    method: "POST",
 
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-RapidAPI-Key": RAPIDAPI_KEY,
-                        "X-RapidAPI-Host":
-                            "flipkart-product-data-api.p.rapidapi.com"
-                    },
-
-                    body: JSON.stringify({
-                        url: url
-                    })
-                }
+            console.log(
+                "Fetching Flipkart product:",
+                productUrl
             );
 
+
+            /* =========================
+               RAPIDAPI REQUEST
+               ========================= */
+
+            const rapidResponse =
+                await fetch(
+                    "https://flipkart-product-data-api.p.rapidapi.com/flipkart/v1/product",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json",
+
+                            "X-RapidAPI-Key":
+                                RAPIDAPI_KEY,
+
+                            "X-RapidAPI-Host":
+                                "flipkart-product-data-api.p.rapidapi.com"
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                url:
+                                    productUrl
+
+                            })
+
+                    }
+                );
+
+
+            /* =========================
+               READ RESPONSE
+               ========================= */
 
             const rapidText =
                 await rapidResponse.text();
 
+
             let rapidData = null;
+
 
             try {
 
                 rapidData =
-                    JSON.parse(rapidText);
+                    JSON.parse(
+                        rapidText
+                    );
 
             } catch (error) {
 
@@ -223,75 +401,191 @@ export default async function handler(req, res) {
                     rapidText
                 );
 
-                return res.status(502).json({
-                    success: false,
-                    message:
-                        "Invalid response from Flipkart API"
-                });
-            }
-
-
-            if (!rapidResponse.ok) {
-
-                console.error(
-                    "RapidAPI error:",
-                    rapidData
-                );
 
                 return res.status(502).json({
+
                     success: false,
+
                     message:
-                        "Unable to fetch Flipkart product data",
+                        "Invalid response from Flipkart API",
+
                     error:
-                        rapidData
+                        rapidText
+
                 });
+
             }
 
 
             /* =========================
-               REEFAPI RESPONSE FORMAT
+               HTTP ERROR
                ========================= */
 
-            let product =
-                rapidData?.data?.product ||
-                rapidData?.data?.result ||
-                rapidData?.data;
+            if (!rapidResponse.ok) {
 
+                console.error(
+                    "RapidAPI HTTP error:",
+                    rapidData
+                );
+
+
+                return res.status(502).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to fetch Flipkart product data",
+
+                    error:
+                        rapidData
+
+                });
+
+            }
+
+
+            /* =================================================
+               IMPORTANT:
+               REEFAPI CAN RETURN HTTP 200 BUT ok:false
+               ================================================= */
 
             if (
-                !product &&
+                rapidData?.ok === false
+            ) {
+
+                console.error(
+                    "ReefAPI returned error:",
+                    rapidData?.error ||
+                    rapidData
+                );
+
+
+                return res.status(502).json({
+
+                    success: false,
+
+                    message:
+                        rapidData?.error?.message ||
+                        "Flipkart product data could not be fetched",
+
+                    error:
+                        rapidData?.error ||
+                        rapidData
+
+                });
+
+            }
+
+
+            /* =========================
+               EXTRACT PRODUCT
+               ========================= */
+
+            let product = null;
+
+
+            /*
+             * Format:
+             * data.product
+             */
+
+            if (
+                rapidData?.data?.product
+            ) {
+
+                product =
+                    rapidData.data.product;
+
+            }
+
+
+            /*
+             * Format:
+             * data.result
+             */
+
+            else if (
+                rapidData?.data?.result
+            ) {
+
+                product =
+                    rapidData.data.result;
+
+            }
+
+
+            /*
+             * Format:
+             * data.results[0]
+             */
+
+            else if (
                 Array.isArray(
                     rapidData?.data?.results
-                )
+                ) &&
+                rapidData.data.results.length > 0
             ) {
 
                 product =
                     rapidData.data.results[0];
+
             }
 
 
-            if (
-                !product &&
+            /*
+             * Format:
+             * data[0]
+             */
+
+            else if (
                 Array.isArray(
                     rapidData?.data
-                )
+                ) &&
+                rapidData.data.length > 0
             ) {
 
                 product =
                     rapidData.data[0];
+
             }
 
 
-            if (!product) {
+            /*
+             * Format:
+             * data
+             */
+
+            else if (
+                rapidData?.data &&
+                typeof rapidData.data === "object"
+            ) {
 
                 product =
-                    rapidData?.product ||
-                    rapidData;
+                    rapidData.data;
+
             }
 
 
+            /*
+             * Fallback
+             */
+
+            else if (
+                rapidData?.product
+            ) {
+
+                product =
+                    rapidData.product;
+
+            }
+
+
+            /* =========================
+               LOG PRODUCT
+               ========================= */
+
             console.log(
-                "RapidAPI product:",
+                "RapidAPI extracted product:",
                 product
             );
 
@@ -304,52 +598,116 @@ export default async function handler(req, res) {
                 product?.title ||
                 product?.name ||
                 product?.product_name ||
+                product?.productTitle ||
                 fetchedProductName ||
-                "Flipkart Product";
+                null;
 
 
             /* =========================
-               CURRENT PRICE
+               PRODUCT PRICE
                ========================= */
+
+            const possiblePrice =
+                product?.price ??
+                product?.current_price ??
+                product?.selling_price ??
+                product?.sellingPrice ??
+                product?.sale_price;
+
 
             const parsedPrice =
                 Number(
-                    product?.price
+                    String(
+                        possiblePrice ?? ""
+                    )
+                    .replace(
+                        /[^0-9.]/g,
+                        ""
+                    )
                 );
 
+
             if (
-                Number.isFinite(parsedPrice) &&
+                Number.isFinite(
+                    parsedPrice
+                ) &&
                 parsedPrice > 0
             ) {
 
                 currentPrice =
                     parsedPrice;
+
             }
-
-
-            /* =========================
-               LOWEST PRICE
-               ========================= */
-
-            lowestPrice =
-                currentPrice;
 
 
             /* =========================
                PRODUCT IMAGE
                ========================= */
 
-            imageUrl =
-                product?.image ||
-                product?.image_url ||
-                product?.thumbnail ||
-                product?.images?.[0] ||
-                product?.images?.[0]?.url ||
-                null;
+            if (
+                typeof product?.image ===
+                "string"
+            ) {
+
+                imageUrl =
+                    product.image;
+
+            }
+
+            else if (
+                typeof product?.image_url ===
+                "string"
+            ) {
+
+                imageUrl =
+                    product.image_url;
+
+            }
+
+            else if (
+                typeof product?.thumbnail ===
+                "string"
+            ) {
+
+                imageUrl =
+                    product.thumbnail;
+
+            }
+
+            else if (
+                Array.isArray(
+                    product?.images
+                )
+            ) {
+
+                const firstImage =
+                    product.images[0];
+
+
+                if (
+                    typeof firstImage ===
+                    "string"
+                ) {
+
+                    imageUrl =
+                        firstImage;
+
+                }
+
+                else if (
+                    firstImage?.url
+                ) {
+
+                    imageUrl =
+                        firstImage.url;
+
+                }
+
+            }
 
 
             /* =========================
-               SAFETY CHECK
+               VALIDATE PRODUCT DATA
                ========================= */
 
             if (
@@ -359,74 +717,154 @@ export default async function handler(req, res) {
             ) {
 
                 console.error(
-                    "Could not extract Flipkart product data:",
+                    "No usable Flipkart product data:",
                     rapidData
                 );
 
+
                 return res.status(502).json({
+
                     success: false,
+
                     message:
                         "Flipkart product data could not be extracted",
+
                     error:
                         rapidData
+
                 });
+
             }
+
+
+            /*
+             * IMPORTANT:
+             * Do not save a fake/empty price.
+             */
+
+            if (
+                currentPrice === null
+            ) {
+
+                console.error(
+                    "Flipkart price missing:",
+                    rapidData
+                );
+
+
+                return res.status(502).json({
+
+                    success: false,
+
+                    message:
+                        "Flipkart product price could not be fetched",
+
+                    error:
+                        rapidData
+
+                });
+
+            }
+
+
+            /* =========================
+               INITIAL LOWEST PRICE
+               ========================= */
+
+            lowestPrice =
+                currentPrice;
+
         }
 
 
-        /* =========================
-           SAVE TRACKED PRODUCT
-           ========================= */
+        /* =====================================================
+           AMAZON
+           ===================================================== */
 
-        const response = await fetch(
-            `${SUPABASE_URL}/rest/v1/tracked_products`,
-            {
-                method: "POST",
+        /*
+         * Amazon API integration is not connected yet.
+         * We do NOT generate fake prices.
+         */
 
-                headers: {
-                    apikey: SUPABASE_KEY,
+        if (store === "Amazon") {
 
-                    Authorization:
-                        `Bearer ${token}`,
+            if (!fetchedProductName) {
 
-                    "Content-Type":
-                        "application/json",
+                fetchedProductName =
+                    "Amazon Product";
 
-                    Prefer:
-                        "return=representation"
-                },
-
-                body: JSON.stringify({
-
-                    user_id:
-                        user.id,
-
-                    product_url:
-                        url,
-
-                    product_name:
-                        fetchedProductName,
-
-                    store:
-                        store,
-
-                    current_price:
-                        currentPrice,
-
-                    lowest_price:
-                        lowestPrice,
-
-                    image_url:
-                        imageUrl
-
-                })
             }
-        );
+
+        }
+
+
+        /* =====================================================
+           SAVE TRACKED PRODUCT
+           ===================================================== */
+
+        const response =
+            await fetch(
+                `${SUPABASE_URL}/rest/v1/tracked_products`,
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        apikey:
+                            SUPABASE_KEY,
+
+                        Authorization:
+                            `Bearer ${token}`,
+
+                        "Content-Type":
+                            "application/json",
+
+                        Prefer:
+                            "return=representation"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            user_id:
+                                user.id,
+
+                            product_url:
+                                productUrl,
+
+                            product_name:
+                                fetchedProductName,
+
+                            store:
+                                store,
+
+                            current_price:
+                                currentPrice,
+
+                            lowest_price:
+                                lowestPrice,
+
+                            image_url:
+                                imageUrl,
+
+                            alert_enabled:
+                                false
+
+                        })
+
+                }
+            );
 
 
         const data =
             await response.json();
 
+
+        /* =========================
+           SUPABASE ERROR
+           ========================= */
 
         if (!response.ok) {
 
@@ -434,6 +872,7 @@ export default async function handler(req, res) {
                 "Supabase tracked_products error:",
                 data
             );
+
 
             return res.status(
                 response.status
@@ -448,18 +887,22 @@ export default async function handler(req, res) {
                     data
 
             });
+
         }
 
 
-        /* =========================
+        /* =====================================================
            SAVE REAL PRICE HISTORY
-           ========================= */
+           ===================================================== */
 
         let historySaved = false;
 
+
         if (
             currentPrice !== null &&
-            Number.isFinite(currentPrice) &&
+            Number.isFinite(
+                currentPrice
+            ) &&
             currentPrice > 0
         ) {
 
@@ -467,9 +910,11 @@ export default async function handler(req, res) {
                 await fetch(
                     `${SUPABASE_URL}/rest/v1/price_history`,
                     {
+
                         method: "POST",
 
                         headers: {
+
                             apikey:
                                 SUPABASE_KEY,
 
@@ -481,6 +926,7 @@ export default async function handler(req, res) {
 
                             Prefer:
                                 "return=representation"
+
                         },
 
                         body:
@@ -493,7 +939,7 @@ export default async function handler(req, res) {
                                     fetchedProductName,
 
                                 product_url:
-                                    url,
+                                    productUrl,
 
                                 store:
                                     store,
@@ -502,46 +948,75 @@ export default async function handler(req, res) {
                                     currentPrice
 
                             })
+
                     }
                 );
 
 
-            const historyData =
-                await historyResponse.json();
+            const historyText =
+                await historyResponse.text();
 
 
-            if (!historyResponse.ok) {
+            let historyData = null;
+
+
+            try {
+
+                historyData =
+                    JSON.parse(
+                        historyText
+                    );
+
+            } catch (error) {
+
+                historyData =
+                    historyText;
+
+            }
+
+
+            if (
+                !historyResponse.ok
+            ) {
 
                 console.error(
                     "Price history save error:",
                     historyData
                 );
 
-            } else {
-
-                historySaved = true;
             }
+
+            else {
+
+                historySaved =
+                    true;
+
+            }
+
         }
 
 
-        /* =========================
+        /* =====================================================
            SUCCESS
-           ========================= */
+           ===================================================== */
 
         return res.status(201).json({
 
-            success: true,
+            success:
+                true,
 
-            mode: "live",
+            mode:
+                "live",
 
             store:
                 store,
 
             url:
-                url,
+                productUrl,
 
             product:
-                data?.[0] || null,
+                data?.[0] ||
+                null,
 
             historySaved:
                 historySaved,
@@ -554,17 +1029,27 @@ export default async function handler(req, res) {
 
     } catch (error) {
 
+        /* =========================
+           GLOBAL ERROR
+           ========================= */
+
         console.error(
             "Track API error:",
             error
         );
 
+
         return res.status(500).json({
 
-            success: false,
+            success:
+                false,
 
             message:
-                "Unable to track product"
+                "Unable to track product",
+
+            error:
+                error?.message ||
+                "Unknown server error"
 
         });
 
