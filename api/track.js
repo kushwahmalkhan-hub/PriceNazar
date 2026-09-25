@@ -196,7 +196,7 @@ export default async function handler(req, res) {
         if (store === "Flipkart") {
 
             const rapidResponse = await fetch(
-                "https://flipkart-product-data-api.p.rapidapi.com/product",
+                "https://flipkart-product-data-api.p.rapidapi.com/flipkart/v1/product",
                 {
                     method: "POST",
 
