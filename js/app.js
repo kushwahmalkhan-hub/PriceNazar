@@ -1,45 +1,7 @@
+
 /* =========================================================
    PriceNazar - Main Application JavaScript
    ========================================================= */
-
-
-/* ================= DEMO DATA ================= */
-
-const demoData = {
-
-    amazon: {
-        store: "Amazon",
-        productName: "Premium Smartphone",
-        currentPrice: 29999,
-        lowestPrice: 27999,
-        history: [
-            { date: "Sep 16", price: 31999 },
-            { date: "Sep 17", price: 30999 },
-            { date: "Sep 18", price: 30499 },
-            { date: "Sep 19", price: 29999 },
-            { date: "Sep 20", price: 29499 },
-            { date: "Sep 21", price: 28999 },
-            { date: "Sep 22", price: 29999 }
-        ]
-    },
-
-    flipkart: {
-        store: "Flipkart",
-        productName: "Performance Laptop",
-        currentPrice: 54999,
-        lowestPrice: 49999,
-        history: [
-            { date: "Sep 16", price: 57999 },
-            { date: "Sep 17", price: 56999 },
-            { date: "Sep 18", price: 55999 },
-            { date: "Sep 19", price: 54999 },
-            { date: "Sep 20", price: 53999 },
-            { date: "Sep 21", price: 52999 },
-            { date: "Sep 22", price: 54999 }
-        ]
-    }
-
-};
 
 
 /* ================= DOM ELEMENTS ================= */
@@ -235,14 +197,12 @@ function detectStore(url) {
             return "amazon";
         }
 
-
         if (
             hostname === "flipkart.com" ||
             hostname.endsWith(".flipkart.com")
         ) {
             return "flipkart";
         }
-
 
         return null;
 
@@ -272,57 +232,8 @@ function isValidProductUrl(url) {
 function createProductData(
     store,
     url,
-    savedProduct = null,
-    useDemo = false
+    savedProduct = null
 ) {
-
-    /* ---------- DEMO DATA ---------- */
-
-    if (useDemo) {
-
-        const data =
-            demoData[store];
-
-        if (!data) {
-            return null;
-        }
-
-        return {
-
-            store:
-                data.store,
-
-            productName:
-                data.productName,
-
-            currentPrice:
-                data.currentPrice,
-
-            lowestPrice:
-                data.lowestPrice,
-
-            history:
-                data.history,
-
-            url:
-                url,
-
-            updatedAt:
-                new Date().toLocaleString(
-                    "en-IN",
-                    {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit"
-                    }
-                )
-
-        };
-
-    }
-
 
     /* ---------- REAL TRACKED PRODUCT ---------- */
 
@@ -331,24 +242,20 @@ function createProductData(
             ? "Amazon"
             : "Flipkart";
 
-
     const productName =
         savedProduct?.product_name ||
         savedProduct?.productName ||
         "Tracked Product";
-
 
     const currentPrice =
         savedProduct?.current_price ??
         savedProduct?.currentPrice ??
         null;
 
-
     const lowestPrice =
         savedProduct?.lowest_price ??
         savedProduct?.lowestPrice ??
         null;
-
 
     return {
 
@@ -400,7 +307,6 @@ function renderTracker(product) {
         return;
     }
 
-
     if (trackerCard) {
         trackerCard.classList.remove("hidden");
     }
@@ -409,14 +315,12 @@ function renderTracker(product) {
         trackerEmpty.classList.add("hidden");
     }
 
-
     if (trackerStore) {
 
         trackerStore.textContent =
             product.store;
 
     }
-
 
     if (trackerProductName) {
 
@@ -425,14 +329,12 @@ function renderTracker(product) {
 
     }
 
-
     if (trackerProductUrl) {
 
         trackerProductUrl.textContent =
             product.url;
 
     }
-
 
     if (trackerCurrentPrice) {
 
@@ -443,7 +345,6 @@ function renderTracker(product) {
 
     }
 
-
     if (trackerLowestPrice) {
 
         trackerLowestPrice.textContent =
@@ -453,7 +354,6 @@ function renderTracker(product) {
 
     }
 
-
     if (trackerUpdated) {
 
         trackerUpdated.textContent =
@@ -461,11 +361,9 @@ function renderTracker(product) {
 
     }
 
-
     renderPriceHistory(
         product.history
     );
-
 
     try {
 
@@ -482,7 +380,6 @@ function renderTracker(product) {
         );
 
     }
-
 
     setTimeout(() => {
 
@@ -526,7 +423,6 @@ function renderPriceHistory(history) {
         return;
     }
 
-
     const validHistory =
         history.filter(
             item =>
@@ -536,7 +432,6 @@ function renderPriceHistory(history) {
                 )
         );
 
-
     if (validHistory.length === 0) {
 
         priceChart.innerHTML =
@@ -545,13 +440,11 @@ function renderPriceHistory(history) {
         return;
     }
 
-
     const prices =
         validHistory.map(
             item =>
                 Number(item.price)
         );
-
 
     const width = 700;
     const height = 300;
@@ -598,7 +491,6 @@ function renderPriceHistory(history) {
                     ) *
                     chartWidth;
 
-
                 const y =
                     paddingTop +
                     (
@@ -607,7 +499,6 @@ function renderPriceHistory(history) {
                         range
                     ) *
                     chartHeight;
-
 
                 return {
 
@@ -634,35 +525,29 @@ function renderPriceHistory(history) {
     const svgNS =
         "http://www.w3.org/2000/svg";
 
-
     const svg =
         document.createElementNS(
             svgNS,
             "svg"
         );
 
-
     svg.setAttribute(
         "viewBox",
         `0 0 ${width} ${height}`
     );
-
 
     svg.setAttribute(
         "width",
         "100%"
     );
 
-
     svg.setAttribute(
         "height",
         "300"
     );
 
-
     svg.style.display =
         "block";
-
 
     svg.style.overflow =
         "visible";
@@ -676,49 +561,41 @@ function renderPriceHistory(history) {
             paddingTop +
             (chartHeight / 4) * i;
 
-
         const line =
             document.createElementNS(
                 svgNS,
                 "line"
             );
 
-
         line.setAttribute(
             "x1",
             paddingLeft
         );
-
 
         line.setAttribute(
             "x2",
             width - paddingRight
         );
 
-
         line.setAttribute(
             "y1",
             y
         );
-
 
         line.setAttribute(
             "y2",
             y
         );
 
-
         line.setAttribute(
             "stroke",
             "rgba(148,163,184,0.20)"
         );
 
-
         line.setAttribute(
             "stroke-width",
             "1"
         );
-
 
         svg.appendChild(
             line
@@ -733,43 +610,36 @@ function renderPriceHistory(history) {
                 range / 4
             ) * i;
 
-
         const text =
             document.createElementNS(
                 svgNS,
                 "text"
             );
 
-
         text.setAttribute(
             "x",
             8
         );
-
 
         text.setAttribute(
             "y",
             y + 4
         );
 
-
         text.setAttribute(
             "fill",
             "#94a3b8"
         );
-
 
         text.setAttribute(
             "font-size",
             "12"
         );
 
-
         text.textContent =
             formatPrice(
                 Math.round(priceValue)
             );
-
 
         svg.appendChild(
             text
@@ -788,49 +658,41 @@ function renderPriceHistory(history) {
             )
             .join(" ");
 
-
     const path =
         document.createElementNS(
             svgNS,
             "path"
         );
 
-
     path.setAttribute(
         "d",
         pathData
     );
-
 
     path.setAttribute(
         "fill",
         "none"
     );
 
-
     path.setAttribute(
         "stroke",
         "#60a5fa"
     );
-
 
     path.setAttribute(
         "stroke-width",
         "4"
     );
 
-
     path.setAttribute(
         "stroke-linecap",
         "round"
     );
 
-
     path.setAttribute(
         "stroke-linejoin",
         "round"
     );
-
 
     svg.appendChild(
         path
@@ -848,42 +710,35 @@ function renderPriceHistory(history) {
                     "circle"
                 );
 
-
             circle.setAttribute(
                 "cx",
                 point.x
             );
-
 
             circle.setAttribute(
                 "cy",
                 point.y
             );
 
-
             circle.setAttribute(
                 "r",
                 "5"
             );
-
 
             circle.setAttribute(
                 "fill",
                 "#60a5fa"
             );
 
-
             circle.setAttribute(
                 "stroke",
                 "#ffffff"
             );
 
-
             circle.setAttribute(
                 "stroke-width",
                 "2"
             );
-
 
             svg.appendChild(
                 circle
@@ -898,48 +753,40 @@ function renderPriceHistory(history) {
                     "text"
                 );
 
-
             priceText.setAttribute(
                 "x",
                 point.x
             );
-
 
             priceText.setAttribute(
                 "y",
                 point.y - 12
             );
 
-
             priceText.setAttribute(
                 "text-anchor",
                 "middle"
             );
-
 
             priceText.setAttribute(
                 "fill",
                 "#e2e8f0"
             );
 
-
             priceText.setAttribute(
                 "font-size",
                 "11"
             );
-
 
             priceText.setAttribute(
                 "font-weight",
                 "600"
             );
 
-
             priceText.textContent =
                 formatPrice(
                     point.price
                 );
-
 
             svg.appendChild(
                 priceText
@@ -954,40 +801,33 @@ function renderPriceHistory(history) {
                     "text"
                 );
 
-
             dateText.setAttribute(
                 "x",
                 point.x
             );
-
 
             dateText.setAttribute(
                 "y",
                 height - 18
             );
 
-
             dateText.setAttribute(
                 "text-anchor",
                 "middle"
             );
-
 
             dateText.setAttribute(
                 "fill",
                 "#94a3b8"
             );
 
-
             dateText.setAttribute(
                 "font-size",
                 "11"
             );
 
-
             dateText.textContent =
                 point.date;
-
 
             svg.appendChild(
                 dateText
@@ -995,7 +835,6 @@ function renderPriceHistory(history) {
 
         }
     );
-
 
     priceChart.appendChild(
         svg
@@ -1012,19 +851,16 @@ async function loadPriceHistory(productUrl) {
         return null;
     }
 
-
     try {
 
         const authHeaders =
             await getAuthHeaders();
-
 
         const headers =
             authHeaders || {
                 "Content-Type":
                     "application/json"
             };
-
 
         const response =
             await fetch(
@@ -1035,10 +871,8 @@ async function loadPriceHistory(productUrl) {
                 }
             );
 
-
         const result =
             await response.json();
-
 
         if (
             response.ok &&
@@ -1056,7 +890,6 @@ async function loadPriceHistory(productUrl) {
             const savedProduct =
                 getStoredProduct();
 
-
             if (
                 savedProduct &&
                 savedProduct.url === productUrl
@@ -1064,7 +897,6 @@ async function loadPriceHistory(productUrl) {
 
                 savedProduct.history =
                     result.history;
-
 
                 try {
 
@@ -1086,18 +918,15 @@ async function loadPriceHistory(productUrl) {
 
             }
 
-
             return result;
 
         }
-
 
         console.warn(
             "Price history unavailable:",
             result.message ||
             "Unknown error"
         );
-
 
     } catch (error) {
 
@@ -1107,7 +936,6 @@ async function loadPriceHistory(productUrl) {
         );
 
     }
-
 
     return null;
 
@@ -1123,9 +951,7 @@ async function trackProduct() {
             ? productSearch.value.trim()
             : "";
 
-
     clearSearchStatus();
-
 
     if (!url) {
 
@@ -1138,7 +964,6 @@ async function trackProduct() {
 
     }
 
-
     if (!isValidProductUrl(url)) {
 
         showSearchStatus(
@@ -1150,16 +975,13 @@ async function trackProduct() {
 
     }
 
-
     const store =
         detectStore(url);
-
 
     showSearchStatus(
         "Checking product...",
         "info"
     );
-
 
     if (trackProductBtn) {
 
@@ -1171,7 +993,6 @@ async function trackProduct() {
 
     }
 
-
     try {
 
         /* Get logged-in user's session */
@@ -1179,13 +1000,11 @@ async function trackProduct() {
         const authHeaders =
             await getAuthHeaders();
 
-
         const headers =
             authHeaders || {
                 "Content-Type":
                     "application/json"
             };
-
 
         const response =
             await fetch(
@@ -1203,21 +1022,15 @@ async function trackProduct() {
                 }
             );
 
-
         const result =
             await response.json();
-
 
         if (
             response.ok &&
             result.success
         ) {
 
-            /*
-             * IMPORTANT:
-             * Use the product returned by the API.
-             * Do not use demoData here.
-             */
+            /* Use the real product returned by the API */
 
             const product =
                 createProductData(
@@ -1226,24 +1039,20 @@ async function trackProduct() {
                     result.product
                 );
 
-
             renderTracker(
                 product
             );
-
 
             showSearchStatus(
                 `${result.store || product.store} product added successfully.`,
                 "success"
             );
 
-
             /* Load saved price history */
 
             await loadPriceHistory(
                 url
             );
-
 
         } else {
 
@@ -1254,7 +1063,6 @@ async function trackProduct() {
 
         }
 
-
     } catch (error) {
 
         console.warn(
@@ -1262,15 +1070,7 @@ async function trackProduct() {
             error
         );
 
-
-        /*
-         * Do NOT use result.product here.
-         *
-         * result exists only inside the try block.
-         *
-         * We show a safe local product instead of
-         * displaying fake Amazon/Flipkart prices.
-         */
+        /* Show a safe local product without fake prices */
 
         const product =
             createProductData(
@@ -1278,11 +1078,9 @@ async function trackProduct() {
                 url
             );
 
-
         renderTracker(
             product
         );
-
 
         showSearchStatus(
             "Unable to connect to the tracking service. Please try again.",
@@ -1290,7 +1088,6 @@ async function trackProduct() {
         );
 
     }
-
 
     finally {
 
@@ -1309,74 +1106,6 @@ async function trackProduct() {
 }
 
 
-/* ================= DEMO PRODUCT ================= */
-
-window.demoProduct =
-    function(productName) {
-
-        let store =
-            "amazon";
-
-
-        let url =
-            "https://www.amazon.in/";
-
-
-        if (
-            productName
-                .toLowerCase()
-                .includes("laptop")
-        ) {
-
-            store =
-                "flipkart";
-
-
-            url =
-                "https://www.flipkart.com/";
-
-        }
-
-
-        if (productSearch) {
-
-            productSearch.value =
-                url;
-
-        }
-
-
-        const product =
-            createProductData(
-                store,
-                url,
-                null,
-                true
-            );
-
-
-        if (!product) {
-            return;
-        }
-
-
-        product.productName =
-            productName;
-
-
-        renderTracker(
-            product
-        );
-
-
-        showSearchStatus(
-            "Demo product loaded.",
-            "success"
-        );
-
-    };
-
-
 /* ================= SAVE ALERT ================= */
 
 async function savePriceAlert() {
@@ -1385,7 +1114,6 @@ async function savePriceAlert() {
         targetPrice
             ? Number(targetPrice.value)
             : 0;
-
 
     if (!value || value <= 0) {
 
@@ -1402,10 +1130,8 @@ async function savePriceAlert() {
         return;
     }
 
-
     const savedProduct =
         getStoredProduct();
-
 
     if (
         !savedProduct ||
@@ -1425,14 +1151,12 @@ async function savePriceAlert() {
         return;
     }
 
-
     try {
 
         /* Get logged-in user's session */
 
         const authHeaders =
             await getAuthHeaders();
-
 
         if (!authHeaders) {
 
@@ -1449,7 +1173,6 @@ async function savePriceAlert() {
             return;
         }
 
-
         if (alertStatus) {
 
             alertStatus.textContent =
@@ -1459,7 +1182,6 @@ async function savePriceAlert() {
                 "#2563eb";
 
         }
-
 
         const response =
             await fetch(
@@ -1491,10 +1213,8 @@ async function savePriceAlert() {
                 }
             );
 
-
         const result =
             await response.json();
-
 
         if (
             !response.ok ||
@@ -1507,7 +1227,6 @@ async function savePriceAlert() {
             );
 
         }
-
 
         /* Save local copy for UI */
 
@@ -1523,7 +1242,6 @@ async function savePriceAlert() {
                 new Date().toISOString()
 
         };
-
 
         try {
 
@@ -1543,7 +1261,6 @@ async function savePriceAlert() {
 
         }
 
-
         if (alertStatus) {
 
             alertStatus.textContent =
@@ -1554,14 +1271,12 @@ async function savePriceAlert() {
 
         }
 
-
     } catch (error) {
 
         console.error(
             "Price alert error:",
             error
         );
-
 
         if (alertStatus) {
 
@@ -1590,11 +1305,9 @@ function getStoredProduct() {
                 "priceNazarTrackedProduct"
             );
 
-
         if (!data) {
             return null;
         }
-
 
         return JSON.parse(data);
 
@@ -1613,7 +1326,6 @@ function restoreTracker() {
 
     const product =
         getStoredProduct();
-
 
     if (product) {
 
@@ -1637,15 +1349,12 @@ function restoreAlert() {
                 "priceNazarAlert"
             );
 
-
         if (!saved) {
             return;
         }
 
-
         const alertData =
             JSON.parse(saved);
-
 
         if (
             targetPrice &&
@@ -1657,7 +1366,6 @@ function restoreAlert() {
 
         }
 
-
         if (alertStatus) {
 
             alertStatus.textContent =
@@ -1665,12 +1373,10 @@ function restoreAlert() {
                     alertData.targetPrice
                 )}`;
 
-
             alertStatus.style.color =
                 "#16a34a";
 
         }
-
 
     } catch (error) {
 
@@ -1695,12 +1401,10 @@ if (mobileMenuBtn) {
                 return;
             }
 
-
             const isOpen =
                 mainNav.classList.contains(
                     "mobile-open"
                 );
-
 
             if (isOpen) {
 
@@ -1708,10 +1412,8 @@ if (mobileMenuBtn) {
                     "mobile-open"
                 );
 
-
                 mainNav.style.display =
                     "";
-
 
             } else {
 
@@ -1719,54 +1421,41 @@ if (mobileMenuBtn) {
                     "mobile-open"
                 );
 
-
                 mainNav.style.display =
                     "flex";
-
 
                 mainNav.style.position =
                     "absolute";
 
-
                 mainNav.style.top =
                     "64px";
-
 
                 mainNav.style.left =
                     "14px";
 
-
                 mainNav.style.right =
                     "14px";
-
 
                 mainNav.style.padding =
                     "15px";
 
-
                 mainNav.style.background =
                     "#ffffff";
-
 
                 mainNav.style.border =
                     "1px solid #e5e7eb";
 
-
                 mainNav.style.borderRadius =
                     "14px";
-
 
                 mainNav.style.flexDirection =
                     "column";
 
-
                 mainNav.style.alignItems =
                     "flex-start";
 
-
                 mainNav.style.gap =
                     "15px";
-
 
                 mainNav.style.boxShadow =
                     "0 15px 35px rgba(15,23,42,.12)";
@@ -1790,7 +1479,6 @@ if (trackProductBtn) {
 
 }
 
-
 if (productSearch) {
 
     productSearch.addEventListener(
@@ -1811,7 +1499,6 @@ if (productSearch) {
     );
 
 }
-
 
 if (saveAlertBtn) {
 
