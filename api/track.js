@@ -41,7 +41,6 @@ export default async function handler(req, res) {
             });
         }
 
-
         if (!RAPIDAPI_KEY) {
             return res.status(500).json({
                 success: false,
@@ -82,7 +81,6 @@ export default async function handler(req, res) {
             }
         );
 
-
         if (!userResponse.ok) {
             return res.status(401).json({
                 success: false,
@@ -90,10 +88,8 @@ export default async function handler(req, res) {
             });
         }
 
-
         const user =
             await userResponse.json();
-
 
         if (!user?.id) {
             return res.status(401).json({
@@ -112,7 +108,6 @@ export default async function handler(req, res) {
             product_name,
             productName
         } = req.body || {};
-
 
         if (!url) {
             return res.status(400).json({
@@ -138,7 +133,6 @@ export default async function handler(req, res) {
                     .toLowerCase()
                     .replace(/^www\./, "");
 
-
             if (
                 hostname === "amazon.in" ||
                 hostname.endsWith(".amazon.in") ||
@@ -148,7 +142,6 @@ export default async function handler(req, res) {
             ) {
                 store = "Amazon";
             }
-
 
             if (
                 hostname === "flipkart.com" ||
@@ -163,7 +156,6 @@ export default async function handler(req, res) {
                 success: false,
                 message: "Invalid product URL"
             });
-
         }
 
 
@@ -214,8 +206,27 @@ export default async function handler(req, res) {
             );
 
 
-            const rapidData =
-                await rapidResponse.json();
+            const rapidText =
+                await rapidResponse.text();
+
+            let rapidData = null;
+
+            try {
+                rapidData =
+                    JSON.parse(rapidText);
+            } catch (error) {
+
+                console.error(
+                    "RapidAPI invalid JSON:",
+                    rapidText
+                );
+
+                return res.status(502).json({
+                    success: false,
+                    message:
+                        "Invalid response from Flipkart API"
+                });
+            }
 
 
             if (!rapidResponse.ok) {
@@ -232,36 +243,131 @@ export default async function handler(req, res) {
                     error:
                         rapidData
                 });
-
             }
 
 
-            const product =
-                rapidData?.product ||
-                rapidData?.data ||
-                rapidData;
+            /* =========================
+               REEFAPI RESPONSE FORMAT
+               { ok, data, meta, error }
+               ========================= */
 
+            let product =
+                rapidData?.data?.product ||
+                rapidData?.data?.result ||
+                rapidData?.data;
+
+
+            /* Handle results[] if returned */
+
+            if (
+                !product &&
+                Array.isArray(rapidData?.data?.results)
+            ) {
+                product =
+                    rapidData.data.results[0];
+            }
+
+
+            /* Handle direct array */
+
+            if (
+                !product &&
+                Array.isArray(rapidData?.data)
+            ) {
+                product =
+                    rapidData.data[0];
+            }
+
+
+            /* Fallback */
+
+            if (!product) {
+                product =
+                    rapidData?.product ||
+                    rapidData;
+            }
+
+
+            console.log(
+                "RapidAPI product:",
+                product
+            );
+
+
+            /* =========================
+               PRODUCT NAME
+               ========================= */
 
             fetchedProductName =
                 product?.title ||
                 product?.name ||
-                fetchedProductName;
+                product?.product_name ||
+                fetchedProductName ||
+                "Flipkart Product";
 
 
-            currentPrice =
-                Number(product?.price) ||
-                null;
+            /* =========================
+               CURRENT PRICE
+               ========================= */
 
+            const parsedPrice =
+                Number(
+                    product?.price
+                );
+
+            if (
+                Number.isFinite(parsedPrice) &&
+                parsedPrice > 0
+            ) {
+                currentPrice =
+                    parsedPrice;
+            }
+
+
+            /* =========================
+               LOWEST PRICE
+               ========================= */
 
             lowestPrice =
                 currentPrice;
 
 
+            /* =========================
+               PRODUCT IMAGE
+               ========================= */
+
             imageUrl =
                 product?.image ||
                 product?.image_url ||
+                product?.thumbnail ||
                 product?.images?.[0] ||
+                product?.images?.[0]?.url ||
                 null;
+
+
+            /* =========================
+               SAFETY CHECK
+               ========================= */
+
+            if (
+                !fetchedProductName &&
+                !currentPrice &&
+                !imageUrl
+            ) {
+
+                console.error(
+                    "Could not extract Flipkart product data:",
+                    rapidData
+                );
+
+                return res.status(502).json({
+                    success: false,
+                    message:
+                        "Flipkart product data could not be extracted",
+                    error:
+                        rapidData
+                });
+            }
         }
 
 
@@ -321,6 +427,11 @@ export default async function handler(req, res) {
 
         if (!response.ok) {
 
+            console.error(
+                "Supabase error:",
+                data
+            );
+
             return res.status(
                 response.status
             ).json({
@@ -334,7 +445,6 @@ export default async function handler(req, res) {
                     data
 
             });
-
         }
 
 
