@@ -20,30 +20,16 @@ export default async function handler(req, res) {
     );
 
 
-    /* =========================
-       OPTIONS
-       ========================= */
-
     if (req.method === "OPTIONS") {
         return res.status(200).end();
     }
 
 
-    /* =========================
-       ONLY POST
-       ========================= */
-
     if (req.method !== "POST") {
-
         return res.status(405).json({
-
             success: false,
-
-            message:
-                "Only POST request is allowed"
-
+            message: "Only POST request is allowed"
         });
-
     }
 
 
@@ -63,38 +49,23 @@ export default async function handler(req, res) {
             process.env.RAPIDAPI_KEY;
 
 
-        /* =========================
-           CHECK ENVIRONMENT
-           ========================= */
-
-        if (
-            !SUPABASE_URL ||
-            !SUPABASE_KEY
-        ) {
+        if (!SUPABASE_URL || !SUPABASE_KEY) {
 
             return res.status(500).json({
-
                 success: false,
-
                 message:
                     "Supabase environment variables are missing"
-
             });
-
         }
 
 
         if (!RAPIDAPI_KEY) {
 
             return res.status(500).json({
-
                 success: false,
-
                 message:
                     "RapidAPI key is missing"
-
             });
-
         }
 
 
@@ -106,19 +77,13 @@ export default async function handler(req, res) {
             req.headers.authorization || "";
 
 
-        if (
-            !authHeader.startsWith("Bearer ")
-        ) {
+        if (!authHeader.startsWith("Bearer ")) {
 
             return res.status(401).json({
-
                 success: false,
-
                 message:
                     "Please login to track products"
-
             });
-
         }
 
 
@@ -137,17 +102,15 @@ export default async function handler(req, res) {
             await fetch(
                 `${SUPABASE_URL}/auth/v1/user`,
                 {
+                    method: "GET",
 
                     headers: {
-
                         apikey:
                             SUPABASE_KEY,
 
                         Authorization:
                             `Bearer ${token}`
-
                     }
-
                 }
             );
 
@@ -163,14 +126,10 @@ export default async function handler(req, res) {
             );
 
             return res.status(401).json({
-
                 success: false,
-
                 message:
                     "Invalid or expired session"
-
             });
-
         }
 
 
@@ -181,14 +140,10 @@ export default async function handler(req, res) {
         if (!user?.id) {
 
             return res.status(401).json({
-
                 success: false,
-
                 message:
                     "User not found"
-
             });
-
         }
 
 
@@ -206,23 +161,38 @@ export default async function handler(req, res) {
         if (!url) {
 
             return res.status(400).json({
-
                 success: false,
-
                 message:
                     "Product URL is required"
-
             });
-
         }
 
 
         /* =========================
-           CLEAN URL
+           VALIDATE URL
            ========================= */
 
-        const productUrl =
-            String(url).trim();
+        let parsedUrl;
+
+        try {
+
+            parsedUrl =
+                new URL(url);
+
+        } catch (error) {
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Invalid product URL"
+            });
+        }
+
+
+        const hostname =
+            parsedUrl.hostname
+                .toLowerCase()
+                .replace(/^www\./, "");
 
 
         /* =========================
@@ -232,82 +202,42 @@ export default async function handler(req, res) {
         let store = null;
 
 
-        try {
+        if (
+            hostname === "amazon.in" ||
+            hostname.endsWith(".amazon.in") ||
+            hostname === "amazon.com" ||
+            hostname.endsWith(".amazon.com") ||
+            hostname === "link.amazon"
+        ) {
 
-            const parsedUrl =
-                new URL(productUrl);
-
-
-            const hostname =
-                parsedUrl.hostname
-                    .toLowerCase()
-                    .replace(
-                        /^www\./,
-                        ""
-                    );
-
-
-            /* AMAZON */
-
-            if (
-                hostname === "amazon.in" ||
-                hostname.endsWith(".amazon.in") ||
-                hostname === "amazon.com" ||
-                hostname.endsWith(".amazon.com") ||
-                hostname === "link.amazon"
-            ) {
-
-                store = "Amazon";
-
-            }
-
-
-            /* FLIPKART */
-
-            if (
-                hostname === "flipkart.com" ||
-                hostname.endsWith(".flipkart.com")
-            ) {
-
-                store = "Flipkart";
-
-            }
-
-
-        } catch (error) {
-
-            console.error(
-                "URL parsing error:",
-                error
-            );
-
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    "Invalid product URL"
-
-            });
-
+            store = "Amazon";
         }
 
 
-        /* =========================
-           STORE VALIDATION
-           ========================= */
+        if (
+            hostname === "flipkart.com" ||
+            hostname.endsWith(".flipkart.com")
+        ) {
+
+            store = "Flipkart";
+        }
+
+
+        if (
+            hostname === "dl.flipkart.com"
+        ) {
+
+            store = "Flipkart";
+        }
+
 
         if (!store) {
 
             return res.status(400).json({
-
                 success: false,
-
                 message:
                     "Only Amazon or Flipkart URL is supported"
-
             });
-
         }
 
 
@@ -328,15 +258,57 @@ export default async function handler(req, res) {
 
 
         /* =====================================================
-           FLIPKART - RAPIDAPI / REEFAPI
+           FLIPKART
            ===================================================== */
 
         if (store === "Flipkart") {
 
+            /* =========================
+               EXTRACT FLIPKART ITEM ID
+               ========================= */
+
+            let itmId = null;
+
+
+            const pathMatch =
+                parsedUrl.pathname.match(
+                    /\/p\/([^/?#]+)/i
+                );
+
+
+            if (pathMatch?.[1]) {
+
+                itmId =
+                    decodeURIComponent(
+                        pathMatch[1]
+                    );
+            }
+
+
+            /*
+             * Some Flipkart links may contain
+             * pid in query parameters.
+             */
+
+            const pid =
+                parsedUrl.searchParams.get(
+                    "pid"
+                );
+
 
             console.log(
-                "Fetching Flipkart product:",
-                productUrl
+                "Flipkart URL:",
+                url
+            );
+
+            console.log(
+                "Flipkart itm_id:",
+                itmId
+            );
+
+            console.log(
+                "Flipkart pid:",
+                pid
             );
 
 
@@ -344,15 +316,31 @@ export default async function handler(req, res) {
                RAPIDAPI REQUEST
                ========================= */
 
+            const rapidBody =
+                itmId
+                    ? {
+                        itm_id:
+                            itmId
+                    }
+                    : {
+                        url:
+                            url
+                    };
+
+
+            console.log(
+                "RapidAPI request body:",
+                rapidBody
+            );
+
+
             const rapidResponse =
                 await fetch(
                     "https://flipkart-product-data-api.p.rapidapi.com/flipkart/v1/product",
                     {
-
                         method: "POST",
 
                         headers: {
-
                             "Content-Type":
                                 "application/json",
 
@@ -361,24 +349,15 @@ export default async function handler(req, res) {
 
                             "X-RapidAPI-Host":
                                 "flipkart-product-data-api.p.rapidapi.com"
-
                         },
 
                         body:
-                            JSON.stringify({
-
-                                url:
-                                    productUrl
-
-                            })
-
+                            JSON.stringify(
+                                rapidBody
+                            )
                     }
                 );
 
-
-            /* =========================
-               READ RESPONSE
-               ========================= */
 
             const rapidText =
                 await rapidResponse.text();
@@ -401,7 +380,6 @@ export default async function handler(req, res) {
                     rapidText
                 );
 
-
                 return res.status(502).json({
 
                     success: false,
@@ -409,16 +387,23 @@ export default async function handler(req, res) {
                     message:
                         "Invalid response from Flipkart API",
 
-                    error:
-                        rapidText
-
+                    raw:
+                        rapidText.substring(
+                            0,
+                            500
+                        )
                 });
-
             }
 
 
+            console.log(
+                "RapidAPI response:",
+                rapidData
+            );
+
+
             /* =========================
-               HTTP ERROR
+               RAPIDAPI ERROR
                ========================= */
 
             if (!rapidResponse.ok) {
@@ -427,7 +412,6 @@ export default async function handler(req, res) {
                     "RapidAPI HTTP error:",
                     rapidData
                 );
-
 
                 return res.status(502).json({
 
@@ -438,56 +422,22 @@ export default async function handler(req, res) {
 
                     error:
                         rapidData
-
                 });
-
             }
-
-
-            /* =================================================
-               IMPORTANT:
-               REEFAPI CAN RETURN HTTP 200 BUT ok:false
-               ================================================= */
-
-            if (
-                rapidData?.ok === false
-            ) {
-
-                console.error(
-                    "ReefAPI returned error:",
-                    rapidData?.error ||
-                    rapidData
-                );
-
-
-                return res.status(502).json({
-
-                    success: false,
-
-                    message:
-                        rapidData?.error?.message ||
-                        "Flipkart product data could not be fetched",
-
-                    error:
-                        rapidData?.error ||
-                        rapidData
-
-                });
-
-            }
-
-
-            /* =========================
-               EXTRACT PRODUCT
-               ========================= */
-
-            let product = null;
 
 
             /*
-             * Format:
+             * ReefAPI can return:
+             *
+             * data
              * data.product
+             * data.result
+             * data.results[]
+             * product
              */
+
+            let product = null;
+
 
             if (
                 rapidData?.data?.product
@@ -496,96 +446,54 @@ export default async function handler(req, res) {
                 product =
                     rapidData.data.product;
 
-            }
-
-
-            /*
-             * Format:
-             * data.result
-             */
-
-            else if (
+            } else if (
                 rapidData?.data?.result
             ) {
 
                 product =
                     rapidData.data.result;
 
-            }
-
-
-            /*
-             * Format:
-             * data.results[0]
-             */
-
-            else if (
+            } else if (
                 Array.isArray(
                     rapidData?.data?.results
-                ) &&
-                rapidData.data.results.length > 0
+                )
             ) {
 
                 product =
                     rapidData.data.results[0];
 
-            }
-
-
-            /*
-             * Format:
-             * data[0]
-             */
-
-            else if (
+            } else if (
                 Array.isArray(
                     rapidData?.data
-                ) &&
-                rapidData.data.length > 0
+                )
             ) {
 
                 product =
                     rapidData.data[0];
 
-            }
-
-
-            /*
-             * Format:
-             * data
-             */
-
-            else if (
-                rapidData?.data &&
-                typeof rapidData.data === "object"
+            } else if (
+                rapidData?.data
             ) {
 
                 product =
                     rapidData.data;
 
-            }
-
-
-            /*
-             * Fallback
-             */
-
-            else if (
+            } else if (
                 rapidData?.product
             ) {
 
                 product =
                     rapidData.product;
 
+            } else {
+
+                product =
+                    rapidData;
             }
 
 
-            /* =========================
-               LOG PRODUCT
-               ========================= */
-
             console.log(
-                "RapidAPI extracted product:",
+                "Extracted Flipkart product:",
                 product
             );
 
@@ -599,49 +507,137 @@ export default async function handler(req, res) {
                 product?.name ||
                 product?.product_name ||
                 product?.productTitle ||
+                product?.product_name_text ||
                 fetchedProductName ||
-                null;
+                "Flipkart Product";
 
 
             /* =========================
-               PRODUCT PRICE
+               PRICE EXTRACTION
                ========================= */
 
-            const possiblePrice =
-                product?.price ??
-                product?.current_price ??
-                product?.selling_price ??
-                product?.sellingPrice ??
-                product?.sale_price;
+            const possiblePrices = [
+
+                product?.price,
+
+                product?.current_price,
+
+                product?.selling_price,
+
+                product?.sellingPrice,
+
+                product?.offer_price,
+
+                product?.offerPrice,
+
+                product?.final_price,
+
+                product?.finalPrice,
+
+                product?.data?.price,
+
+                product?.pricing?.price,
+
+                product?.pricing?.selling_price,
+
+                product?.pricing?.sellingPrice,
+
+                product?.price_info?.price,
+
+                product?.price_info?.selling_price
+
+            ];
 
 
-            const parsedPrice =
-                Number(
-                    String(
-                        possiblePrice ?? ""
-                    )
-                    .replace(
-                        /[^0-9.]/g,
-                        ""
-                    )
-                );
-
-
-            if (
-                Number.isFinite(
-                    parsedPrice
-                ) &&
-                parsedPrice > 0
+            for (
+                const value of possiblePrices
             ) {
 
-                currentPrice =
-                    parsedPrice;
+                if (
+                    value !== undefined &&
+                    value !== null &&
+                    value !== ""
+                ) {
 
+                    const numeric =
+                        Number(
+                            String(value)
+                                .replace(
+                                    /[^0-9.]/g,
+                                    ""
+                                )
+                        );
+
+
+                    if (
+                        Number.isFinite(numeric) &&
+                        numeric > 0
+                    ) {
+
+                        currentPrice =
+                            numeric;
+
+                        break;
+                    }
+                }
             }
 
 
             /* =========================
-               PRODUCT IMAGE
+               VARIANT PRICE FALLBACK
+               ========================= */
+
+            if (
+                currentPrice === null &&
+                Array.isArray(
+                    product?.variants
+                )
+            ) {
+
+                for (
+                    const variant
+                    of product.variants
+                ) {
+
+                    const variantPrice =
+                        Number(
+                            String(
+                                variant?.price ??
+                                variant?.selling_price ??
+                                ""
+                            ).replace(
+                                /[^0-9.]/g,
+                                ""
+                            )
+                        );
+
+
+                    if (
+                        Number.isFinite(
+                            variantPrice
+                        ) &&
+                        variantPrice > 0
+                    ) {
+
+                        currentPrice =
+                            variantPrice;
+
+                        break;
+                    }
+                }
+            }
+
+
+            /* =========================
+               LOWEST PRICE
+               ========================= */
+
+            lowestPrice =
+                currentPrice;
+
+
+            /* =========================
+               IMAGE
                ========================= */
 
             if (
@@ -652,9 +648,7 @@ export default async function handler(req, res) {
                 imageUrl =
                     product.image;
 
-            }
-
-            else if (
+            } else if (
                 typeof product?.image_url ===
                 "string"
             ) {
@@ -662,9 +656,7 @@ export default async function handler(req, res) {
                 imageUrl =
                     product.image_url;
 
-            }
-
-            else if (
+            } else if (
                 typeof product?.thumbnail ===
                 "string"
             ) {
@@ -672,9 +664,7 @@ export default async function handler(req, res) {
                 imageUrl =
                     product.thumbnail;
 
-            }
-
-            else if (
+            } else if (
                 Array.isArray(
                     product?.images
                 )
@@ -692,55 +682,19 @@ export default async function handler(req, res) {
                     imageUrl =
                         firstImage;
 
-                }
-
-                else if (
+                } else if (
                     firstImage?.url
                 ) {
 
                     imageUrl =
                         firstImage.url;
-
                 }
-
             }
 
 
             /* =========================
-               VALIDATE PRODUCT DATA
+               PRICE REQUIRED
                ========================= */
-
-            if (
-                !fetchedProductName &&
-                !currentPrice &&
-                !imageUrl
-            ) {
-
-                console.error(
-                    "No usable Flipkart product data:",
-                    rapidData
-                );
-
-
-                return res.status(502).json({
-
-                    success: false,
-
-                    message:
-                        "Flipkart product data could not be extracted",
-
-                    error:
-                        rapidData
-
-                });
-
-            }
-
-
-            /*
-             * IMPORTANT:
-             * Do not save a fake/empty price.
-             */
 
             if (
                 currentPrice === null
@@ -748,32 +702,38 @@ export default async function handler(req, res) {
 
                 console.error(
                     "Flipkart price missing:",
-                    rapidData
+                    {
+                        rapidData,
+                        product
+                    }
                 );
-
 
                 return res.status(502).json({
 
                     success: false,
 
                     message:
-                        "Flipkart product price could not be fetched",
+                        "Flipkart product found, but price could not be extracted",
 
                     error:
                         rapidData
-
                 });
-
             }
 
 
-            /* =========================
-               INITIAL LOWEST PRICE
-               ========================= */
+            console.log(
+                "Flipkart final data:",
+                {
+                    name:
+                        fetchedProductName,
 
-            lowestPrice =
-                currentPrice;
+                    price:
+                        currentPrice,
 
+                    image:
+                        imageUrl
+                }
+            );
         }
 
 
@@ -781,20 +741,22 @@ export default async function handler(req, res) {
            AMAZON
            ===================================================== */
 
-        /*
-         * Amazon API integration is not connected yet.
-         * We do NOT generate fake prices.
-         */
-
         if (store === "Amazon") {
 
-            if (!fetchedProductName) {
+            /*
+             * Amazon integration will use the
+             * authorized Amazon API later.
+             *
+             * Do not create fake Amazon prices.
+             */
 
-                fetchedProductName =
-                    "Amazon Product";
+            return res.status(501).json({
 
-            }
+                success: false,
 
+                message:
+                    "Amazon live price API is not connected yet"
+            });
         }
 
 
@@ -806,7 +768,6 @@ export default async function handler(req, res) {
             await fetch(
                 `${SUPABASE_URL}/rest/v1/tracked_products`,
                 {
-
                     method: "POST",
 
                     headers: {
@@ -822,7 +783,6 @@ export default async function handler(req, res) {
 
                         Prefer:
                             "return=representation"
-
                     },
 
                     body:
@@ -832,7 +792,7 @@ export default async function handler(req, res) {
                                 user.id,
 
                             product_url:
-                                productUrl,
+                                url,
 
                             product_name:
                                 fetchedProductName,
@@ -853,7 +813,6 @@ export default async function handler(req, res) {
                                 false
 
                         })
-
                 }
             );
 
@@ -862,17 +821,12 @@ export default async function handler(req, res) {
             await response.json();
 
 
-        /* =========================
-           SUPABASE ERROR
-           ========================= */
-
         if (!response.ok) {
 
             console.error(
                 "Supabase tracked_products error:",
                 data
             );
-
 
             return res.status(
                 response.status
@@ -885,9 +839,7 @@ export default async function handler(req, res) {
 
                 error:
                     data
-
             });
-
         }
 
 
@@ -895,7 +847,8 @@ export default async function handler(req, res) {
            SAVE REAL PRICE HISTORY
            ===================================================== */
 
-        let historySaved = false;
+        let historySaved =
+            false;
 
 
         if (
@@ -910,7 +863,6 @@ export default async function handler(req, res) {
                 await fetch(
                     `${SUPABASE_URL}/rest/v1/price_history`,
                     {
-
                         method: "POST",
 
                         headers: {
@@ -926,7 +878,6 @@ export default async function handler(req, res) {
 
                             Prefer:
                                 "return=representation"
-
                         },
 
                         body:
@@ -939,16 +890,14 @@ export default async function handler(req, res) {
                                     fetchedProductName,
 
                                 product_url:
-                                    productUrl,
+                                    url,
 
                                 store:
                                     store,
 
                                 price:
                                     currentPrice
-
                             })
-
                     }
                 );
 
@@ -957,7 +906,8 @@ export default async function handler(req, res) {
                 await historyResponse.text();
 
 
-            let historyData = null;
+            let historyData =
+                null;
 
 
             try {
@@ -971,7 +921,6 @@ export default async function handler(req, res) {
 
                 historyData =
                     historyText;
-
             }
 
 
@@ -984,15 +933,11 @@ export default async function handler(req, res) {
                     historyData
                 );
 
-            }
-
-            else {
+            } else {
 
                 historySaved =
                     true;
-
             }
-
         }
 
 
@@ -1012,7 +957,7 @@ export default async function handler(req, res) {
                 store,
 
             url:
-                productUrl,
+                url,
 
             product:
                 data?.[0] ||
@@ -1023,18 +968,13 @@ export default async function handler(req, res) {
 
             message:
                 "Product tracked successfully"
-
         });
 
 
     } catch (error) {
 
-        /* =========================
-           GLOBAL ERROR
-           ========================= */
-
         console.error(
-            "Track API error:",
+            "Track API fatal error:",
             error
         );
 
@@ -1050,9 +990,6 @@ export default async function handler(req, res) {
             error:
                 error?.message ||
                 "Unknown server error"
-
         });
-
     }
-
 }
