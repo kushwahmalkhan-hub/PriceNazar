@@ -212,8 +212,10 @@ export default async function handler(req, res) {
             let rapidData = null;
 
             try {
+
                 rapidData =
                     JSON.parse(rapidText);
+
             } catch (error) {
 
                 console.error(
@@ -248,7 +250,6 @@ export default async function handler(req, res) {
 
             /* =========================
                REEFAPI RESPONSE FORMAT
-               { ok, data, meta, error }
                ========================= */
 
             let product =
@@ -257,31 +258,32 @@ export default async function handler(req, res) {
                 rapidData?.data;
 
 
-            /* Handle results[] if returned */
-
             if (
                 !product &&
-                Array.isArray(rapidData?.data?.results)
+                Array.isArray(
+                    rapidData?.data?.results
+                )
             ) {
+
                 product =
                     rapidData.data.results[0];
             }
 
 
-            /* Handle direct array */
-
             if (
                 !product &&
-                Array.isArray(rapidData?.data)
+                Array.isArray(
+                    rapidData?.data
+                )
             ) {
+
                 product =
                     rapidData.data[0];
             }
 
 
-            /* Fallback */
-
             if (!product) {
+
                 product =
                     rapidData?.product ||
                     rapidData;
@@ -319,6 +321,7 @@ export default async function handler(req, res) {
                 Number.isFinite(parsedPrice) &&
                 parsedPrice > 0
             ) {
+
                 currentPrice =
                     parsedPrice;
             }
@@ -428,7 +431,7 @@ export default async function handler(req, res) {
         if (!response.ok) {
 
             console.error(
-                "Supabase error:",
+                "Supabase tracked_products error:",
                 data
             );
 
@@ -445,6 +448,79 @@ export default async function handler(req, res) {
                     data
 
             });
+        }
+
+
+        /* =========================
+           SAVE REAL PRICE HISTORY
+           ========================= */
+
+        let historySaved = false;
+
+        if (
+            currentPrice !== null &&
+            Number.isFinite(currentPrice) &&
+            currentPrice > 0
+        ) {
+
+            const historyResponse =
+                await fetch(
+                    `${SUPABASE_URL}/rest/v1/price_history`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            apikey:
+                                SUPABASE_KEY,
+
+                            Authorization:
+                                `Bearer ${token}`,
+
+                            "Content-Type":
+                                "application/json",
+
+                            Prefer:
+                                "return=representation"
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                user_id:
+                                    user.id,
+
+                                product_name:
+                                    fetchedProductName,
+
+                                product_url:
+                                    url,
+
+                                store:
+                                    store,
+
+                                price:
+                                    currentPrice
+
+                            })
+                    }
+                );
+
+
+            const historyData =
+                await historyResponse.json();
+
+
+            if (!historyResponse.ok) {
+
+                console.error(
+                    "Price history save error:",
+                    historyData
+                );
+
+            } else {
+
+                historySaved = true;
+            }
         }
 
 
@@ -466,6 +542,9 @@ export default async function handler(req, res) {
 
             product:
                 data?.[0] || null,
+
+            historySaved:
+                historySaved,
 
             message:
                 "Product tracked successfully"
