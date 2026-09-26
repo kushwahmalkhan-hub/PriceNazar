@@ -31,7 +31,7 @@ export default async function handler(req, res) {
   try {
     // Get tracked Flipkart products
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/tracked_products?store=eq.Flipkart&select=id,user_id,product_url,product_name,store`,
+      `${SUPABASE_URL}/rest/v1/tracked_products?store=eq.Flipkart&select=id,user_id,product_url,product_name,store,lowest_price`,
       { headers }
     );
 
@@ -138,6 +138,16 @@ export default async function handler(req, res) {
           throw new Error("Could not save price history");
         }
 
+        // Calculate lowest price
+        const oldLowest = Number(item.lowest_price);
+
+        const lowestPrice =
+          item.lowest_price == null ||
+          !Number.isFinite(oldLowest) ||
+          oldLowest <= 0
+            ? price
+            : Math.min(oldLowest, price);
+
         // Update current price and lowest price
         const updateResponse = await fetch(
           `${SUPABASE_URL}/rest/v1/tracked_products?id=eq.${encodeURIComponent(item.id)}`,
@@ -149,17 +159,19 @@ export default async function handler(req, res) {
             },
             body: JSON.stringify({
               current_price: price,
+              lowest_price: lowestPrice,
             }),
           }
         );
 
         if (!updateResponse.ok) {
-          throw new Error("Could not update current price");
+          throw new Error("Could not update product price");
         }
 
         results.push({
           product: item.product_name,
           price,
+          lowest_price: lowestPrice,
           saved: true,
         });
       } catch (error) {
