@@ -182,7 +182,6 @@ function escapeHTML(value) {
       '"': "&quot;",
       "'": "&#39;"
     };
-
     return entities[char];
   });
 }
@@ -198,17 +197,14 @@ function formatPrice(price) {
   if (typeof price !== "number" || !Number.isFinite(price)) {
     return "Check store";
   }
-
   return "₹" + price.toLocaleString("en-IN");
 }
 
 function getSearchUrl(store, productName) {
   const query = encodeURIComponent(productName);
-
   if (store === "amazon") {
     return `https://www.amazon.in/s?k=${query}`;
   }
-
   return `https://www.flipkart.com/search?q=${query}`;
 }
 
@@ -283,18 +279,26 @@ function createProductCard(product) {
 }
 
 /* =========================================
-   Search, Filter and Sort
-   ✅ BUG FIX: matchesCategory की गलत
-   Smartwatches condition हटाई।
-   matchesActiveCategory सही रखी।
+   ✅ FIXED: Search, Filter and Sort
    ========================================= */
 
+function getCategoryMatch(productCategory, filterValue) {
+  if (filterValue === "all") return true;
+  // "Tablets" filter में Tablets + Smartwatches दोनों दिखें
+  if (filterValue === "Tablets") {
+    return productCategory === "Tablets" || productCategory === "Smartwatches";
+  }
+  return productCategory === filterValue;
+}
+
 function getFilteredProducts() {
-  const searchTerm = normalizeText(productSearch.value);
+  const rawSearch = productSearch.value.trim();
+  const searchTerm = normalizeText(rawSearch);
   const category = categoryFilter.value;
   const sortValue = sortFilter.value;
 
   let filtered = products.filter(product => {
+    // Search match
     const searchableText = normalizeText([
       product.name,
       product.category,
@@ -302,28 +306,15 @@ function getFilteredProducts() {
       product.searchTerms || ""
     ].join(" "));
 
-    const matchesSearch =
-      !searchTerm ||
-      searchableText.includes(searchTerm);
+    const matchesSearch = !searchTerm || searchableText.includes(searchTerm);
 
-    // ✅ FIX: गलत Smartwatches condition हटाई
-    const matchesCategory =
-      category === "all" ||
-      product.category === category;
+    // Dropdown filter match
+    const matchesCategory = getCategoryMatch(product.category, category);
 
-    const matchesActiveCategory =
-      activeCategory === "all" ||
-      product.category === activeCategory ||
-      (
-        activeCategory === "Tablets" &&
-        ["Tablets", "Smartwatches"].includes(product.category)
-      );
+    // Category card click match
+    const matchesActiveCategory = getCategoryMatch(product.category, activeCategory);
 
-    return (
-      matchesSearch &&
-      matchesCategory &&
-      matchesActiveCategory
-    );
+    return matchesSearch && matchesCategory && matchesActiveCategory;
   });
 
   if (sortValue === "name-asc") {
@@ -365,14 +356,11 @@ function renderProducts() {
     `;
 
     const resetButton = document.getElementById("resetSearchBtn");
-
     if (resetButton) {
       resetButton.addEventListener("click", resetSearch);
     }
   } else {
-    productGrid.innerHTML = filtered
-      .map(createProductCard)
-      .join("");
+    productGrid.innerHTML = filtered.map(createProductCard).join("");
   }
 
   searchStatus.textContent =
@@ -384,31 +372,27 @@ function resetSearch() {
   categoryFilter.value = "all";
   sortFilter.value = "default";
   activeCategory = "all";
-
   renderProducts();
 }
 
 /* =========================================
-   Category Selection
+   Category Card Click
    ========================================= */
 
 document.querySelectorAll(".category-card").forEach(button => {
   button.addEventListener("click", () => {
     activeCategory = button.dataset.category;
 
-    categoryFilter.value =
-      [...categoryFilter.options].some(
-        option => option.value === activeCategory
-      )
-        ? activeCategory
-        : "all";
+    // Dropdown को sync करें
+    const optionExists = [...categoryFilter.options].some(
+      opt => opt.value === activeCategory
+    );
+    categoryFilter.value = optionExists ? activeCategory : "all";
 
     productSearch.value = "";
     sortFilter.value = "default";
 
-    document.getElementById("products").scrollIntoView({
-      behavior: "smooth"
-    });
+    document.getElementById("products").scrollIntoView({ behavior: "smooth" });
 
     renderProducts();
   });
@@ -428,9 +412,7 @@ function renderComparison() {
     return;
   }
 
-  const selected = selectedProducts
-    .map(getProductById)
-    .filter(Boolean);
+  const selected = selectedProducts.map(getProductById).filter(Boolean);
 
   compareList.innerHTML = `
     <div class="comparison-table-wrap">
@@ -438,48 +420,29 @@ function renderComparison() {
         <thead>
           <tr>
             <th>Features</th>
-
             ${selected.map(product => `
               <th>
-                ${escapeHTML(product.image)}
-                <br>
-                ${escapeHTML(product.name)}
-                <br>
-
-                <button
-                  class="compare-remove-btn"
-                  data-remove-id="${product.id}"
-                >
+                ${escapeHTML(product.image)}<br>
+                ${escapeHTML(product.name)}<br>
+                <button class="compare-remove-btn" data-remove-id="${product.id}">
                   Remove
                 </button>
               </th>
             `).join("")}
           </tr>
         </thead>
-
         <tbody>
           <tr>
             <th>Category</th>
-
-            ${selected.map(product => `
-              <td>${escapeHTML(product.category)}</td>
-            `).join("")}
+            ${selected.map(p => `<td>${escapeHTML(p.category)}</td>`).join("")}
           </tr>
-
           <tr>
             <th>Price</th>
-
-            ${selected.map(product => `
-              <td>${formatPrice(product.price)}</td>
-            `).join("")}
+            ${selected.map(p => `<td>${formatPrice(p.price)}</td>`).join("")}
           </tr>
-
           <tr>
             <th>Description</th>
-
-            ${selected.map(product => `
-              <td>${escapeHTML(product.description)}</td>
-            `).join("")}
+            ${selected.map(p => `<td>${escapeHTML(p.description)}</td>`).join("")}
           </tr>
         </tbody>
       </table>
@@ -491,16 +454,12 @@ function toggleCompare(id) {
   const productId = Number(id);
 
   if (selectedProducts.includes(productId)) {
-    selectedProducts = selectedProducts.filter(
-      selectedId => selectedId !== productId
-    );
+    selectedProducts = selectedProducts.filter(sid => sid !== productId);
   } else {
     if (selectedProducts.length >= 3) {
-      searchStatus.textContent =
-        "You can compare up to 3 products at a time.";
+      searchStatus.textContent = "You can compare up to 3 products at a time.";
       return;
     }
-
     selectedProducts.push(productId);
   }
 
@@ -509,26 +468,22 @@ function toggleCompare(id) {
 }
 
 /* =========================================
-   Product Compare Button
+   Product Grid - Compare Button
    ========================================= */
 
 productGrid.addEventListener("click", event => {
   const button = event.target.closest("[data-compare-id]");
-
   if (!button) return;
-
   toggleCompare(button.dataset.compareId);
 });
 
 /* =========================================
-   Remove Product from Comparison
+   Compare List - Remove Button
    ========================================= */
 
 compareList.addEventListener("click", event => {
   const button = event.target.closest("[data-remove-id]");
-
   if (!button) return;
-
   toggleCompare(button.dataset.removeId);
 });
 
@@ -543,46 +498,36 @@ clearCompareBtn.addEventListener("click", () => {
 });
 
 /* =========================================
-   Search Button and Input
-   ✅ BUG FIX: activeCategory reset होता है
-   search से पहले ताकि सभी products दिखें
+   ✅ FIXED: Search Events
+   activeCategory और categoryFilter दोनों
+   reset होते हैं search से पहले
    ========================================= */
 
-searchBtn.addEventListener("click", () => {
-  activeCategory = "all";          // ✅ Reset
-  categoryFilter.value = "all";    // ✅ Reset
-
+function doSearch() {
+  activeCategory = "all";
+  categoryFilter.value = "all";
   renderProducts();
+}
 
-  document.getElementById("products").scrollIntoView({
-    behavior: "smooth"
-  });
+searchBtn.addEventListener("click", () => {
+  doSearch();
+  document.getElementById("products").scrollIntoView({ behavior: "smooth" });
 });
 
 productSearch.addEventListener("input", () => {
-  activeCategory = "all";          // ✅ Reset
-  categoryFilter.value = "all";    // ✅ Reset
-
-  renderProducts();
+  doSearch();
 });
 
 productSearch.addEventListener("keydown", event => {
   if (event.key === "Enter") {
     event.preventDefault();
-
-    activeCategory = "all";        // ✅ Reset
-    categoryFilter.value = "all";  // ✅ Reset
-
-    renderProducts();
-
-    document.getElementById("products").scrollIntoView({
-      behavior: "smooth"
-    });
+    doSearch();
+    document.getElementById("products").scrollIntoView({ behavior: "smooth" });
   }
 });
 
 /* =========================================
-   Category Filter
+   Category Dropdown Filter
    ========================================= */
 
 categoryFilter.addEventListener("change", () => {
