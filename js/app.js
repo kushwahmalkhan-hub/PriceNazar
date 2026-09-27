@@ -1,6 +1,5 @@
 /* =========================================
    PriceNazar - Static Electronics Catalog
-   No API, no price tracking
    ========================================= */
 
 const products = [
@@ -134,6 +133,10 @@ const products = [
   }
 ];
 
+/* =========================================
+   DOM Elements
+   ========================================= */
+
 const productGrid = document.getElementById("productGrid");
 const productSearch = document.getElementById("productSearch");
 const searchBtn = document.getElementById("searchBtn");
@@ -162,6 +165,7 @@ function escapeHTML(value) {
       '"': "&quot;",
       "'": "&#39;"
     };
+
     return entities[char];
   });
 }
@@ -197,11 +201,13 @@ function createProductCard(product) {
 
   return `
     <article class="product-card">
+
       <div class="product-image">
         <span>${escapeHTML(product.image)}</span>
       </div>
 
       <div class="product-info">
+
         <span class="product-category">
           ${escapeHTML(product.category)}
         </span>
@@ -223,6 +229,7 @@ function createProductCard(product) {
         </p>
 
         <div class="product-actions">
+
           <a
             class="primary-btn store-link"
             href="${getSearchUrl("amazon", product.name)}"
@@ -240,15 +247,17 @@ function createProductCard(product) {
           >
             Flipkart
           </a>
+
         </div>
 
         <button
           class="compare-btn ${isSelected ? "selected" : ""}"
           data-compare-id="${product.id}"
-          ${isSelected ? "aria-pressed='true'" : "aria-pressed='false'"}
+          aria-pressed="${isSelected ? "true" : "false"}"
         >
           ${isSelected ? "✓ Added to Compare" : "＋ Compare"}
         </button>
+
       </div>
     </article>
   `;
@@ -264,13 +273,19 @@ function getFilteredProducts() {
   const sortValue = sortFilter.value;
 
   let filtered = products.filter(product => {
+
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm) ||
       product.category.toLowerCase().includes(searchTerm) ||
       product.description.toLowerCase().includes(searchTerm);
 
     const matchesCategory =
-      category === "all" || product.category === category;
+      category === "all" ||
+      product.category === category ||
+      (
+        category === "Tablets" &&
+        product.category === "Smartwatches"
+      );
 
     const matchesActiveCategory =
       activeCategory === "all" ||
@@ -280,18 +295,26 @@ function getFilteredProducts() {
         ["Tablets", "Smartwatches"].includes(product.category)
       );
 
-    return matchesSearch && matchesCategory && matchesActiveCategory;
+    return (
+      matchesSearch &&
+      matchesCategory &&
+      matchesActiveCategory
+    );
   });
 
   if (sortValue === "name-asc") {
     filtered.sort((a, b) => a.name.localeCompare(b.name));
-  } else if (sortValue === "price-asc") {
+  }
+
+  if (sortValue === "price-asc") {
     filtered.sort((a, b) => {
       if (a.price == null) return 1;
       if (b.price == null) return -1;
       return a.price - b.price;
     });
-  } else if (sortValue === "price-desc") {
+  }
+
+  if (sortValue === "price-desc") {
     filtered.sort((a, b) => {
       if (a.price == null) return 1;
       if (b.price == null) return -1;
@@ -314,7 +337,9 @@ function renderProducts() {
       </div>
     `;
   } else {
-    productGrid.innerHTML = filtered.map(createProductCard).join("");
+    productGrid.innerHTML = filtered
+      .map(createProductCard)
+      .join("");
   }
 
   searchStatus.textContent =
@@ -366,16 +391,20 @@ function renderComparison() {
 
   compareList.innerHTML = `
     <div class="comparison-table-wrap">
+
       <table class="comparison-table">
+
         <thead>
           <tr>
             <th>Features</th>
+
             ${selected.map(product => `
               <th>
                 ${escapeHTML(product.image)}
                 <br>
                 ${escapeHTML(product.name)}
                 <br>
+
                 <button
                   class="compare-remove-btn"
                   data-remove-id="${product.id}"
@@ -384,12 +413,15 @@ function renderComparison() {
                 </button>
               </th>
             `).join("")}
+
           </tr>
         </thead>
 
         <tbody>
+
           <tr>
             <th>Category</th>
+
             ${selected.map(product => `
               <td>${escapeHTML(product.category)}</td>
             `).join("")}
@@ -397,6 +429,7 @@ function renderComparison() {
 
           <tr>
             <th>Price</th>
+
             ${selected.map(product => `
               <td>${formatPrice(product.price)}</td>
             `).join("")}
@@ -404,22 +437,20 @@ function renderComparison() {
 
           <tr>
             <th>Description</th>
+
             ${selected.map(product => `
               <td>${escapeHTML(product.description)}</td>
             `).join("")}
           </tr>
+
         </tbody>
       </table>
     </div>
   `;
 }
 
-/* =========================================
-   Toggle Compare
-   ========================================= */
-
-function toggleCompare(id) {
-  const productId = Number(id);
+function toggleCompare(productId) {
+  productId = Number(productId);
 
   if (selectedProducts.includes(productId)) {
     selectedProducts = selectedProducts.filter(
@@ -443,6 +474,7 @@ function toggleCompare(id) {
    Event Listeners
    ========================================= */
 
+// Compare button
 productGrid.addEventListener("click", event => {
   const button = event.target.closest("[data-compare-id]");
 
@@ -451,6 +483,7 @@ productGrid.addEventListener("click", event => {
   toggleCompare(button.dataset.compareId);
 });
 
+// Remove button
 compareList.addEventListener("click", event => {
   const button = event.target.closest("[data-remove-id]");
 
@@ -459,27 +492,52 @@ compareList.addEventListener("click", event => {
   toggleCompare(button.dataset.removeId);
 });
 
+// Clear comparison
 clearCompareBtn.addEventListener("click", () => {
   selectedProducts = [];
+
   renderProducts();
   renderComparison();
 });
 
-searchBtn.addEventListener("click", renderProducts);
+// Search button
+searchBtn.addEventListener("click", () => {
+  activeCategory = "all";
+  categoryFilter.value = "all";
+  renderProducts();
 
-productSearch.addEventListener("input", renderProducts);
+  document.getElementById("products").scrollIntoView({
+    behavior: "smooth"
+  });
+});
 
+// Live search
+productSearch.addEventListener("input", () => {
+  activeCategory = "all";
+  categoryFilter.value = "all";
+  renderProducts();
+});
+
+// Enter key search
 productSearch.addEventListener("keydown", event => {
   if (event.key === "Enter") {
+    activeCategory = "all";
+    categoryFilter.value = "all";
     renderProducts();
+
+    document.getElementById("products").scrollIntoView({
+      behavior: "smooth"
+    });
   }
 });
 
+// Category dropdown
 categoryFilter.addEventListener("change", () => {
   activeCategory = "all";
   renderProducts();
 });
 
+// Sort dropdown
 sortFilter.addEventListener("change", renderProducts);
 
 /* =========================================
