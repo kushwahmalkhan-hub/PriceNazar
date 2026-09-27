@@ -2,489 +2,203 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PriceNazar helps you track product prices, view price history, and set price alerts.">
-    <title>PriceNazar - Smart Price Tracker</title>
-
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Explore and compare smartphones, laptops, TVs and electronics on PriceNazar.">
+  <title>PriceNazar - Electronics Price Comparison</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
 
-    <!-- ================= HEADER ================= -->
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#" class="logo">Price<span>Nazar</span></a>
 
-    <header class="site-header">
-        <div class="container header-inner">
+      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+        ☰
+      </button>
 
-            <a href="#home" class="logo">
-                Price<span>Nazar</span>
-            </a>
+      <nav class="main-nav" id="mainNav">
+        <a href="#home">Home</a>
+        <a href="#categories">Categories</a>
+        <a href="#products">Products</a>
+        <a href="#compare">Compare</a>
+      </nav>
+    </div>
+  </header>
 
-            <nav class="main-nav">
-                <a href="#home">Home</a>
-                <a href="#features">Features</a>
-                <a href="#tracker">Tracker</a>
+  <main>
+    <!-- Hero -->
+    <section class="hero" id="home">
+      <div class="container hero-content">
+        <span class="hero-badge">SMART ELECTRONICS SHOPPING</span>
 
-                <button class="auth-nav-btn" id="loginBtn" type="button">
-                    Login
-                </button>
+        <h1>Find the Right Product<br>
+          at the <span>Right Price</span>
+        </h1>
 
-                <button class="auth-nav-btn hidden" id="logoutBtn" type="button">
-                    Logout
-                </button>
-            </nav>
+        <p class="hero-description">
+          Explore electronics, compare products and find shopping links
+          for your favorite gadgets.
+        </p>
 
-            <button
-                class="mobile-menu-btn"
-                id="mobileMenuBtn"
-                type="button"
-                aria-label="Toggle navigation"
-                aria-expanded="false"
+        <div class="search-wrapper">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input
+              type="search"
+              id="productSearch"
+              placeholder="Search phones, laptops, TVs..."
+              aria-label="Search products"
             >
-                ☰
-            </button>
-
-        </div>
-    </header>
-
-
-    <!-- ================= MAIN CONTENT ================= -->
-
-    <main>
-
-        <!-- ================= HERO ================= -->
-
-        <section class="hero" id="home">
-            <div class="container hero-content">
-
-                <div class="hero-badge">
-                    🔥 SMART PRICE TRACKING
-                </div>
-
-                <h1>
-                    Keep Your
-                    <span>PriceNazar</span>
-                    On
-                </h1>
-
-                <p class="hero-description">
-                    Compare prices, track price history
-                    and know when it's the right time
-                    to buy.
-                </p>
-
-                <!-- SEARCH BOX -->
-
-                <div class="search-wrapper">
-                    <div class="search-box">
-
-                        <span class="search-icon">🔍</span>
-
-                        <input
-                            type="text"
-                            id="productSearch"
-                            placeholder="Paste Amazon or Flipkart product URL..."
-                            autocomplete="off"
-                        >
-
-                        <button
-                            id="trackProductBtn"
-                            class="primary-btn"
-                            type="button"
-                        >
-                            Track Product
-                        </button>
-
-                    </div>
-
-                    <p class="search-hint">
-                        Supports Amazon.in and Flipkart.com
-                    </p>
-                </div>
-
-                <!-- SEARCH STATUS -->
-
-                <div
-                    id="searchStatus"
-                    class="status-message"
-                    role="status"
-                    aria-live="polite"
-                ></div>
-
-                <!-- TRUST ITEMS -->
-
-                <div class="hero-trust">
-                    <div>✓ Easy to use</div>
-                    <div>✓ Price history</div>
-                    <div>✓ Price alerts</div>
-                </div>
-
-            </div>
-        </section>
-
-
-        <!-- ================= FEATURES ================= -->
-
-        <section class="features-section" id="features">
-            <div class="container">
-
-                <div class="section-heading">
-                    <span class="section-label">FEATURES</span>
-
-                    <h2>
-                        Everything you need to
-                        <span>track prices</span>
-                    </h2>
-
-                    <p>
-                        PriceNazar helps you watch products
-                        and make informed buying decisions.
-                    </p>
-                </div>
-
-                <div class="features-grid">
-
-                    <!-- FEATURE 1 -->
-
-                    <article class="feature-card">
-                        <div class="feature-icon blue">🔎</div>
-
-                        <h3>Price Comparison</h3>
-
-                        <p>
-                            Compare prices across supported
-                            shopping platforms in one place.
-                        </p>
-                    </article>
-
-                    <!-- FEATURE 2 -->
-
-                    <article class="feature-card">
-                        <div class="feature-icon purple">📈</div>
-
-                        <h3>Price History</h3>
-
-                        <p>
-                            See previous prices and identify
-                            the lowest recorded price.
-                        </p>
-                    </article>
-
-                    <!-- FEATURE 3 -->
-
-                    <article class="feature-card">
-                        <div class="feature-icon orange">🔔</div>
-
-                        <h3>Price Alerts</h3>
-
-                        <p>
-                            Set your target price and keep
-                            watching for a price drop.
-                        </p>
-                    </article>
-
-                    <!-- FEATURE 4 -->
-
-                    <article class="feature-card">
-                        <div class="feature-icon green">💰</div>
-
-                        <h3>Lowest Price</h3>
-
-                        <p>
-                            Quickly identify the lowest
-                            available tracked price.
-                        </p>
-                    </article>
-
-                    <!-- FEATURE 5 -->
-
-                    <article class="feature-card">
-                        <div class="feature-icon pink">📱</div>
-
-                        <h3>Mobile Friendly</h3>
-
-                        <p>
-                            Use PriceNazar comfortably on
-                            phones, tablets and computers.
-                        </p>
-                    </article>
-
-                    <!-- FEATURE 6 -->
-
-                    <article class="feature-card">
-                        <div class="feature-icon cyan">⚡</div>
-
-                        <h3>Fast Tracking</h3>
-
-                        <p>
-                            Quickly add supported product
-                            links to your tracking list.
-                        </p>
-                    </article>
-
-                </div>
-            </div>
-        </section>
-
-
-        <!-- ================= TRACKED PRODUCT ================= -->
-
-        <section class="tracker-section" id="tracker">
-            <div class="container">
-
-                <div class="section-heading">
-                    <span class="section-label">YOUR TRACKER</span>
-
-                    <h2>Tracked Product</h2>
-
-                    <p>
-                        Your latest tracked product will
-                        appear here.
-                    </p>
-                </div>
-
-                <!-- TRACKER CARD -->
-
-                <div class="tracker-card hidden" id="trackerCard">
-
-                    <div class="tracker-header">
-                        <div>
-
-                            <span class="store-badge" id="trackerStore">
-                                STORE
-                            </span>
-
-                            <h3 id="trackerProductName">
-                                Product
-                            </h3>
-
-                            <p
-                                id="trackerProductUrl"
-                                class="product-url"
-                            ></p>
-
-                        </div>
-
-                        <div class="tracker-status">
-                            ● Tracking
-                        </div>
-                    </div>
-
-                    <!-- PRICE STATS -->
-
-                    <div class="price-stats">
-
-                        <div class="price-stat">
-                            <span>Current Price</span>
-
-                            <strong id="trackerCurrentPrice">
-                                ₹—
-                            </strong>
-                        </div>
-
-                        <div class="price-stat lowest-stat">
-                            <span>Lowest Price</span>
-
-                            <strong id="trackerLowestPrice">
-                                ₹—
-                            </strong>
-                        </div>
-
-                        <div class="price-stat">
-                            <span>Last Updated</span>
-
-                            <strong id="trackerUpdated">
-                                —
-                            </strong>
-                        </div>
-
-                    </div>
-
-                    <!-- PRICE HISTORY -->
-
-                    <div class="history-card">
-
-                        <div class="history-header">
-                            <div>
-                                <h3>Price History</h3>
-
-                                <p>
-                                    Track price movement over time.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div
-                            class="price-chart"
-                            id="priceChart"
-                        ></div>
-
-                        <p class="chart-note">
-                            Real store price history will be
-                            connected after authorized API
-                            integration.
-                        </p>
-
-                    </div>
-
-                    <!-- PRICE ALERT -->
-
-                    <div class="alert-card">
-
-                        <div class="alert-header">
-                            <div>
-                                <h3>🔔 Price Alert</h3>
-
-                                <p>
-                                    Enter the price you want
-                                    to pay.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="alert-form">
-
-                            <input
-                                type="number"
-                                id="targetPrice"
-                                placeholder="Target price ₹"
-                                min="1"
-                            >
-
-                            <button
-                                id="saveAlertBtn"
-                                class="primary-btn"
-                                type="button"
-                            >
-                                Save Alert
-                            </button>
-
-                        </div>
-
-                        <p
-                            id="alertStatus"
-                            class="alert-status"
-                            role="status"
-                            aria-live="polite"
-                        ></p>
-
-                    </div>
-
-                </div>
-
-                <!-- EMPTY TRACKER -->
-
-                <div class="tracker-empty" id="trackerEmpty">
-
-                    <div class="empty-icon">📦</div>
-
-                    <h3>No product tracked yet</h3>
-
-                    <p>
-                        Paste an Amazon or Flipkart
-                        product URL above to start tracking.
-                    </p>
-
-                </div>
-
-            </div>
-        </section>
-
-
-        <!-- ================= HOW IT WORKS ================= -->
-
-        <section class="how-section">
-            <div class="container">
-
-                <div class="section-heading">
-                    <span class="section-label">HOW IT WORKS</span>
-
-                    <h2>Track prices in 3 simple steps</h2>
-                </div>
-
-                <div class="steps-grid">
-
-                    <div class="step">
-                        <div class="step-number">01</div>
-
-                        <h3>Add Product</h3>
-
-                        <p>
-                            Paste an Amazon or Flipkart
-                            product URL.
-                        </p>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-number">02</div>
-
-                        <h3>Track Price</h3>
-
-                        <p>
-                            Watch price information and
-                            price history.
-                        </p>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-number">03</div>
-
-                        <h3>Buy at the Right Time</h3>
-
-                        <p>
-                            Use your target price and
-                            price history to decide when
-                            to buy.
-                        </p>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-
-    <!-- ================= FOOTER ================= -->
-
-    <footer class="site-footer">
-
-        <div class="container footer-content">
-
-            <div class="footer-brand">
-
-                <a href="#home" class="logo">
-                    Price<span>Nazar</span>
-                </a>
-
-                <p>
-                    Smart price tracking made simple.
-                </p>
-
-            </div>
-
-            <div class="footer-links">
-
-                <a href="#home">Home</a>
-                <a href="#features">Features</a>
-                <a href="#tracker">Tracker</a>
-
-            </div>
-
+            <button class="primary-btn" id="searchBtn">Search</button>
+          </div>
         </div>
 
-        <div class="footer-bottom">
-            © 2026 PriceNazar. All rights reserved.
+        <p class="search-hint">
+          Browse products and compare their details in one place.
+        </p>
+      </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="features-section" id="categories">
+      <div class="container">
+        <div class="section-heading">
+          <span class="section-label">EXPLORE CATEGORIES</span>
+          <h2>Shop by <span>Category</span></h2>
+          <p>Find the electronics you are looking for.</p>
         </div>
 
-    </footer>
+        <div class="features-grid" id="categoryGrid">
+          <button class="feature-card category-card" data-category="Smartphones">
+            <div class="feature-icon blue">📱</div>
+            <h3>Smartphones</h3>
+            <p>Explore mobile phones.</p>
+          </button>
 
+          <button class="feature-card category-card" data-category="Laptops">
+            <div class="feature-icon purple">💻</div>
+            <h3>Laptops</h3>
+            <p>Find laptops for work and gaming.</p>
+          </button>
 
-    <!-- ================= JAVASCRIPT ================= -->
+          <button class="feature-card category-card" data-category="Smart TVs">
+            <div class="feature-icon orange">📺</div>
+            <h3>Smart TVs</h3>
+            <p>Explore smart televisions.</p>
+          </button>
 
-    <script src="js/app.js"></script>
-    <script src="js/auth.js"></script>
+          <button class="feature-card category-card" data-category="PC Parts">
+            <div class="feature-icon green">🖥️</div>
+            <h3>PC Parts</h3>
+            <p>GPUs, CPUs, RAM and storage.</p>
+          </button>
 
+          <button class="feature-card category-card" data-category="Accessories">
+            <div class="feature-icon pink">🎧</div>
+            <h3>Accessories</h3>
+            <p>Headphones, chargers and more.</p>
+          </button>
+
+          <button class="feature-card category-card" data-category="Tablets">
+            <div class="feature-icon cyan">📟</div>
+            <h3>Tablets & Wearables</h3>
+            <p>Tablets and smartwatches.</p>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Products -->
+    <section class="tracker-section" id="products">
+      <div class="container">
+        <div class="section-heading">
+          <span class="section-label">PRODUCT CATALOG</span>
+          <h2>Explore <span>Products</span></h2>
+          <p>Search and filter products, then compare your choices.</p>
+        </div>
+
+        <div class="product-filters">
+          <select id="categoryFilter" aria-label="Filter by category">
+            <option value="all">All Categories</option>
+            <option value="Smartphones">Smartphones</option>
+            <option value="Laptops">Laptops</option>
+            <option value="Smart TVs">Smart TVs</option>
+            <option value="PC Parts">PC Parts</option>
+            <option value="Accessories">Accessories</option>
+            <option value="Tablets">Tablets</option>
+            <option value="Smartwatches">Smartwatches</option>
+            <option value="Other Electronics">Other Electronics</option>
+          </select>
+
+          <select id="sortFilter" aria-label="Sort products">
+            <option value="default">Default Order</option>
+            <option value="name-asc">Name: A to Z</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+          </select>
+        </div>
+
+        <p class="status-message" id="searchStatus" aria-live="polite"></p>
+
+        <div class="product-grid" id="productGrid">
+          <div class="tracker-empty">
+            <div class="empty-icon">🛍️</div>
+            <h3>Loading products...</h3>
+            <p>Product catalog will appear here.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Compare -->
+    <section class="features-section" id="compare">
+      <div class="container">
+        <div class="section-heading">
+          <span class="section-label">SIDE-BY-SIDE COMPARISON</span>
+          <h2>Compare <span>Products</span></h2>
+          <p>Select up to 3 products to compare their specifications.</p>
+        </div>
+
+        <div class="compare-card">
+          <div id="compareList">
+            <p class="compare-empty">
+              Select products using the Compare button on a product card.
+            </p>
+          </div>
+
+          <button class="primary-btn" id="clearCompareBtn">
+            Clear Comparison
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div class="footer-brand">
+        <a href="#" class="logo">Price<span>Nazar</span></a>
+        <p>Explore electronics. Compare products. Shop smarter.</p>
+      </div>
+
+      <div class="footer-links">
+        <a href="#home">Home</a>
+        <a href="#categories">Categories</a>
+        <a href="#products">Products</a>
+        <a href="#compare">Compare</a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      © <span id="currentYear"></span> PriceNazar. All rights reserved.
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
 </body>
 </html>
