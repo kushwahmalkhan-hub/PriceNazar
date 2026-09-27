@@ -274,8 +274,12 @@ function getFilteredProducts() {
       category === "all" || product.category === category;
 
     const matchesActiveCategory =
-      activeCategory === "all" ||
-      product.category === activeCategory;
+  activeCategory === "all" ||
+  product.category === activeCategory ||
+  (
+    activeCategory === "Tablets" &&
+    ["Tablets", "Smartwatches"].includes(product.category)
+  );
 
     return matchesSearch && matchesCategory && matchesActiveCategory;
   });
