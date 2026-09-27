@@ -151,6 +151,20 @@ const products = [
 ];
 
 /* =========================================
+   Products — Admin Panel से load होंगे
+   ========================================= */
+
+var defaultProducts = products.slice(); // backup
+
+function getProducts() {
+  var stored = localStorage.getItem("pn_products");
+  if (stored) {
+    try { return JSON.parse(stored); } catch(e) {}
+  }
+  return defaultProducts;
+}
+
+/* =========================================
    State
    ========================================= */
 
@@ -226,8 +240,8 @@ function createProductCard(product) {
     + '<div class="product-price">' + formatPrice(product.price) + '</div>'
     + '<p class="price-note">Price may vary by store. Check the retailer for the latest price.</p>'
     + '<div class="product-actions">'
-    + '<a class="primary-btn store-link" href="' + getSearchUrl("amazon", product.name) + '" target="_blank" rel="noopener noreferrer">Amazon</a>'
-    + '<a class="secondary-btn store-link" href="' + getSearchUrl("flipkart", product.name) + '" target="_blank" rel="noopener noreferrer">Flipkart</a>'
+    + '<a class="primary-btn store-link" href="' + (product.amazonLink || getSearchUrl("amazon", product.name)) + '" target="_blank" rel="noopener noreferrer">Amazon</a>'
+    + '<a class="secondary-btn store-link" href="' + (product.flipkartLink || getSearchUrl("flipkart", product.name)) + '" target="_blank" rel="noopener noreferrer">Flipkart</a>'
     + '</div>'
     + '<button class="compare-btn ' + (isSelected ? "selected" : "") + '" data-compare-id="' + product.id + '" aria-pressed="' + (isSelected ? "true" : "false") + '">'
     + (isSelected ? "✓ Added to Compare" : "＋ Compare")
@@ -249,7 +263,8 @@ function getFilteredProducts() {
   var category = categoryFilterEl ? categoryFilterEl.value : "all";
   var sortValue = sortFilterEl ? sortFilterEl.value : "default";
 
-  var filtered = products.filter(function(product) {
+  var allProducts = getProducts();
+  var filtered = allProducts.filter(function(product) {
     var searchableText = normalizeText([
       product.name,
       product.category,
