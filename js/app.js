@@ -151,20 +151,8 @@ const products = [
 ];
 
 /* =========================================
-   DOM Elements
+   State
    ========================================= */
-
-const productGrid = document.getElementById("productGrid");
-const productSearch = document.getElementById("productSearch");
-const searchBtn = document.getElementById("searchBtn");
-const categoryFilter = document.getElementById("categoryFilter");
-const sortFilter = document.getElementById("sortFilter");
-const searchStatus = document.getElementById("searchStatus");
-const compareList = document.getElementById("compareList");
-const clearCompareBtn = document.getElementById("clearCompareBtn");
-const currentYear = document.getElementById("currentYear");
-const mobileMenuBtn = document.getElementById("mobileMenuBtn");
-const mainNav = document.getElementById("mainNav");
 
 let selectedProducts = [];
 let activeCategory = "all";
@@ -203,13 +191,23 @@ function formatPrice(price) {
 function getSearchUrl(store, productName) {
   const query = encodeURIComponent(productName);
   if (store === "amazon") {
-    return `https://www.amazon.in/s?k=${query}`;
+    return "https://www.amazon.in/s?k=" + query;
   }
-  return `https://www.flipkart.com/search?q=${query}`;
+  return "https://www.flipkart.com/search?q=" + query;
 }
 
 function getProductById(id) {
-  return products.find(product => product.id === Number(id));
+  return products.find(function(product) {
+    return product.id === Number(id);
+  });
+}
+
+function getCategoryMatch(productCategory, filterValue) {
+  if (filterValue === "all") return true;
+  if (filterValue === "Tablets") {
+    return productCategory === "Tablets" || productCategory === "Smartwatches";
+  }
+  return productCategory === filterValue;
 }
 
 /* =========================================
@@ -217,120 +215,67 @@ function getProductById(id) {
    ========================================= */
 
 function createProductCard(product) {
-  const isSelected = selectedProducts.includes(product.id);
+  var isSelected = selectedProducts.includes(product.id);
 
-  return `
-    <article class="product-card">
-      <div class="product-image">
-        <span>${escapeHTML(product.image)}</span>
-      </div>
-
-      <div class="product-info">
-        <span class="product-category">
-          ${escapeHTML(product.category)}
-        </span>
-
-        <h3 class="product-name">
-          ${escapeHTML(product.name)}
-        </h3>
-
-        <p class="product-description">
-          ${escapeHTML(product.description)}
-        </p>
-
-        <div class="product-price">
-          ${formatPrice(product.price)}
-        </div>
-
-        <p class="price-note">
-          Price may vary by store. Check the retailer for the latest price.
-        </p>
-
-        <div class="product-actions">
-          <a
-            class="primary-btn store-link"
-            href="${getSearchUrl("amazon", product.name)}"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Amazon
-          </a>
-
-          <a
-            class="secondary-btn store-link"
-            href="${getSearchUrl("flipkart", product.name)}"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Flipkart
-          </a>
-        </div>
-
-        <button
-          class="compare-btn ${isSelected ? "selected" : ""}"
-          data-compare-id="${product.id}"
-          aria-pressed="${isSelected ? "true" : "false"}"
-        >
-          ${isSelected ? "✓ Added to Compare" : "＋ Compare"}
-        </button>
-      </div>
-    </article>
-  `;
+  return '<article class="product-card">'
+    + '<div class="product-image"><span>' + escapeHTML(product.image) + '</span></div>'
+    + '<div class="product-info">'
+    + '<span class="product-category">' + escapeHTML(product.category) + '</span>'
+    + '<h3 class="product-name">' + escapeHTML(product.name) + '</h3>'
+    + '<p class="product-description">' + escapeHTML(product.description) + '</p>'
+    + '<div class="product-price">' + formatPrice(product.price) + '</div>'
+    + '<p class="price-note">Price may vary by store. Check the retailer for the latest price.</p>'
+    + '<div class="product-actions">'
+    + '<a class="primary-btn store-link" href="' + getSearchUrl("amazon", product.name) + '" target="_blank" rel="noopener noreferrer">Amazon</a>'
+    + '<a class="secondary-btn store-link" href="' + getSearchUrl("flipkart", product.name) + '" target="_blank" rel="noopener noreferrer">Flipkart</a>'
+    + '</div>'
+    + '<button class="compare-btn ' + (isSelected ? "selected" : "") + '" data-compare-id="' + product.id + '" aria-pressed="' + (isSelected ? "true" : "false") + '">'
+    + (isSelected ? "✓ Added to Compare" : "＋ Compare")
+    + '</button>'
+    + '</div></article>';
 }
 
 /* =========================================
-   ✅ FIXED: Search, Filter and Sort
+   Filter & Render
    ========================================= */
 
-function getCategoryMatch(productCategory, filterValue) {
-  if (filterValue === "all") return true;
-  // "Tablets" filter में Tablets + Smartwatches दोनों दिखें
-  if (filterValue === "Tablets") {
-    return productCategory === "Tablets" || productCategory === "Smartwatches";
-  }
-  return productCategory === filterValue;
-}
-
 function getFilteredProducts() {
-  const rawSearch = productSearch.value.trim();
-  const searchTerm = normalizeText(rawSearch);
-  const category = categoryFilter.value;
-  const sortValue = sortFilter.value;
+  var productSearchEl = document.getElementById("productSearch");
+  var categoryFilterEl = document.getElementById("categoryFilter");
+  var sortFilterEl = document.getElementById("sortFilter");
 
-  let filtered = products.filter(product => {
-    // Search match
-    const searchableText = normalizeText([
+  var rawSearch = productSearchEl ? productSearchEl.value.trim() : "";
+  var searchTerm = normalizeText(rawSearch);
+  var category = categoryFilterEl ? categoryFilterEl.value : "all";
+  var sortValue = sortFilterEl ? sortFilterEl.value : "default";
+
+  var filtered = products.filter(function(product) {
+    var searchableText = normalizeText([
       product.name,
       product.category,
       product.description,
       product.searchTerms || ""
     ].join(" "));
 
-    const matchesSearch = !searchTerm || searchableText.includes(searchTerm);
-
-    // Dropdown filter match
-    const matchesCategory = getCategoryMatch(product.category, category);
-
-    // Category card click match
-    const matchesActiveCategory = getCategoryMatch(product.category, activeCategory);
+    var matchesSearch = !searchTerm || searchableText.includes(searchTerm);
+    var matchesCategory = getCategoryMatch(product.category, category);
+    var matchesActiveCategory = getCategoryMatch(product.category, activeCategory);
 
     return matchesSearch && matchesCategory && matchesActiveCategory;
   });
 
   if (sortValue === "name-asc") {
-    filtered.sort((a, b) => a.name.localeCompare(b.name));
+    filtered.sort(function(a, b) { return a.name.localeCompare(b.name); });
   }
-
   if (sortValue === "price-asc") {
-    filtered.sort((a, b) => {
+    filtered.sort(function(a, b) {
       if (a.price == null) return 1;
       if (b.price == null) return -1;
       return a.price - b.price;
     });
   }
-
   if (sortValue === "price-desc") {
-    filtered.sort((a, b) => {
+    filtered.sort(function(a, b) {
       if (a.price == null) return 1;
       if (b.price == null) return -1;
       return b.price - a.price;
@@ -341,123 +286,94 @@ function getFilteredProducts() {
 }
 
 function renderProducts() {
-  const filtered = getFilteredProducts();
+  var productGrid = document.getElementById("productGrid");
+  var searchStatus = document.getElementById("searchStatus");
+
+  if (!productGrid) return;
+
+  var filtered = getFilteredProducts();
 
   if (!filtered.length) {
-    productGrid.innerHTML = `
-      <div class="tracker-empty">
-        <div class="empty-icon">🔎</div>
-        <h3>No products found</h3>
-        <p>Try a different search term or category.</p>
-        <button class="primary-btn" id="resetSearchBtn">
-          Show All Products
-        </button>
-      </div>
-    `;
+    productGrid.innerHTML = '<div class="tracker-empty">'
+      + '<div class="empty-icon">🔎</div>'
+      + '<h3>No products found</h3>'
+      + '<p>Try a different search term or category.</p>'
+      + '<button class="primary-btn" id="resetSearchBtn">Show All Products</button>'
+      + '</div>';
 
-    const resetButton = document.getElementById("resetSearchBtn");
-    if (resetButton) {
-      resetButton.addEventListener("click", resetSearch);
+    var resetBtn = document.getElementById("resetSearchBtn");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", resetSearch);
     }
   } else {
     productGrid.innerHTML = filtered.map(createProductCard).join("");
   }
 
-  searchStatus.textContent =
-    `${filtered.length} product${filtered.length === 1 ? "" : "s"} found`;
+  if (searchStatus) {
+    searchStatus.textContent = filtered.length + " product" + (filtered.length === 1 ? "" : "s") + " found";
+  }
 }
 
 function resetSearch() {
-  productSearch.value = "";
-  categoryFilter.value = "all";
-  sortFilter.value = "default";
+  var productSearchEl = document.getElementById("productSearch");
+  var categoryFilterEl = document.getElementById("categoryFilter");
+  var sortFilterEl = document.getElementById("sortFilter");
+
+  if (productSearchEl) productSearchEl.value = "";
+  if (categoryFilterEl) categoryFilterEl.value = "all";
+  if (sortFilterEl) sortFilterEl.value = "default";
   activeCategory = "all";
   renderProducts();
 }
 
-/* =========================================
-   Category Card Click
-   ========================================= */
-
-document.querySelectorAll(".category-card").forEach(button => {
-  button.addEventListener("click", () => {
-    activeCategory = button.dataset.category;
-
-    // Dropdown को sync करें
-    const optionExists = [...categoryFilter.options].some(
-      opt => opt.value === activeCategory
-    );
-    categoryFilter.value = optionExists ? activeCategory : "all";
-
-    productSearch.value = "";
-    sortFilter.value = "default";
-
-    document.getElementById("products").scrollIntoView({ behavior: "smooth" });
-
-    renderProducts();
-  });
-});
+function doSearch() {
+  activeCategory = "all";
+  var categoryFilterEl = document.getElementById("categoryFilter");
+  if (categoryFilterEl) categoryFilterEl.value = "all";
+  renderProducts();
+}
 
 /* =========================================
-   Compare Products
+   Compare
    ========================================= */
 
 function renderComparison() {
+  var compareList = document.getElementById("compareList");
+  if (!compareList) return;
+
   if (!selectedProducts.length) {
-    compareList.innerHTML = `
-      <p class="compare-empty">
-        Select products using the Compare button on a product card.
-      </p>
-    `;
+    compareList.innerHTML = '<p class="compare-empty">Select products using the Compare button on a product card.</p>';
     return;
   }
 
-  const selected = selectedProducts.map(getProductById).filter(Boolean);
+  var selected = selectedProducts.map(getProductById).filter(Boolean);
 
-  compareList.innerHTML = `
-    <div class="comparison-table-wrap">
-      <table class="comparison-table">
-        <thead>
-          <tr>
-            <th>Features</th>
-            ${selected.map(product => `
-              <th>
-                ${escapeHTML(product.image)}<br>
-                ${escapeHTML(product.name)}<br>
-                <button class="compare-remove-btn" data-remove-id="${product.id}">
-                  Remove
-                </button>
-              </th>
-            `).join("")}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th>Category</th>
-            ${selected.map(p => `<td>${escapeHTML(p.category)}</td>`).join("")}
-          </tr>
-          <tr>
-            <th>Price</th>
-            ${selected.map(p => `<td>${formatPrice(p.price)}</td>`).join("")}
-          </tr>
-          <tr>
-            <th>Description</th>
-            ${selected.map(p => `<td>${escapeHTML(p.description)}</td>`).join("")}
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  `;
+  var rows = selected.map(function(p) { return '<td>' + escapeHTML(p.category) + '</td>'; }).join("");
+  var priceRows = selected.map(function(p) { return '<td>' + formatPrice(p.price) + '</td>'; }).join("");
+  var descRows = selected.map(function(p) { return '<td>' + escapeHTML(p.description) + '</td>'; }).join("");
+  var headers = selected.map(function(p) {
+    return '<th>' + escapeHTML(p.image) + '<br>' + escapeHTML(p.name) + '<br>'
+      + '<button class="compare-remove-btn" data-remove-id="' + p.id + '">Remove</button></th>';
+  }).join("");
+
+  compareList.innerHTML = '<div class="comparison-table-wrap"><table class="comparison-table">'
+    + '<thead><tr><th>Features</th>' + headers + '</tr></thead>'
+    + '<tbody>'
+    + '<tr><th>Category</th>' + rows + '</tr>'
+    + '<tr><th>Price</th>' + priceRows + '</tr>'
+    + '<tr><th>Description</th>' + descRows + '</tr>'
+    + '</tbody></table></div>';
 }
 
 function toggleCompare(id) {
-  const productId = Number(id);
+  var productId = Number(id);
+  var searchStatus = document.getElementById("searchStatus");
 
   if (selectedProducts.includes(productId)) {
-    selectedProducts = selectedProducts.filter(sid => sid !== productId);
+    selectedProducts = selectedProducts.filter(function(sid) { return sid !== productId; });
   } else {
     if (selectedProducts.length >= 3) {
-      searchStatus.textContent = "You can compare up to 3 products at a time.";
+      if (searchStatus) searchStatus.textContent = "You can compare up to 3 products at a time.";
       return;
     }
     selectedProducts.push(productId);
@@ -468,102 +384,127 @@ function toggleCompare(id) {
 }
 
 /* =========================================
-   Product Grid - Compare Button
+   Init — सब कुछ DOMContentLoaded में
    ========================================= */
 
-productGrid.addEventListener("click", event => {
-  const button = event.target.closest("[data-compare-id]");
-  if (!button) return;
-  toggleCompare(button.dataset.compareId);
-});
+document.addEventListener("DOMContentLoaded", function() {
 
-/* =========================================
-   Compare List - Remove Button
-   ========================================= */
+  // Product grid click (compare button)
+  var productGrid = document.getElementById("productGrid");
+  if (productGrid) {
+    productGrid.addEventListener("click", function(event) {
+      var button = event.target.closest("[data-compare-id]");
+      if (!button) return;
+      toggleCompare(button.dataset.compareId);
+    });
+  }
 
-compareList.addEventListener("click", event => {
-  const button = event.target.closest("[data-remove-id]");
-  if (!button) return;
-  toggleCompare(button.dataset.removeId);
-});
+  // Compare list click (remove button)
+  var compareList = document.getElementById("compareList");
+  if (compareList) {
+    compareList.addEventListener("click", function(event) {
+      var button = event.target.closest("[data-remove-id]");
+      if (!button) return;
+      toggleCompare(button.dataset.removeId);
+    });
+  }
 
-/* =========================================
-   Clear Comparison
-   ========================================= */
+  // Clear comparison
+  var clearCompareBtn = document.getElementById("clearCompareBtn");
+  if (clearCompareBtn) {
+    clearCompareBtn.addEventListener("click", function() {
+      selectedProducts = [];
+      renderProducts();
+      renderComparison();
+    });
+  }
 
-clearCompareBtn.addEventListener("click", () => {
-  selectedProducts = [];
+  // Search button
+  var searchBtn = document.getElementById("searchBtn");
+  if (searchBtn) {
+    searchBtn.addEventListener("click", function() {
+      doSearch();
+      var productsSection = document.getElementById("products");
+      if (productsSection) productsSection.scrollIntoView({ behavior: "smooth" });
+    });
+  }
+
+  // Search input
+  var productSearch = document.getElementById("productSearch");
+  if (productSearch) {
+    productSearch.addEventListener("input", function() {
+      doSearch();
+    });
+    productSearch.addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        doSearch();
+        var productsSection = document.getElementById("products");
+        if (productsSection) productsSection.scrollIntoView({ behavior: "smooth" });
+      }
+    });
+  }
+
+  // Category dropdown
+  var categoryFilter = document.getElementById("categoryFilter");
+  if (categoryFilter) {
+    categoryFilter.addEventListener("change", function() {
+      activeCategory = "all";
+      renderProducts();
+    });
+  }
+
+  // Sort filter
+  var sortFilter = document.getElementById("sortFilter");
+  if (sortFilter) {
+    sortFilter.addEventListener("change", renderProducts);
+  }
+
+  // Category cards
+  document.querySelectorAll(".category-card").forEach(function(button) {
+    button.addEventListener("click", function() {
+      activeCategory = button.dataset.category;
+      var categoryFilter = document.getElementById("categoryFilter");
+      if (categoryFilter) {
+        var optionExists = Array.from(categoryFilter.options).some(function(opt) {
+          return opt.value === activeCategory;
+        });
+        categoryFilter.value = optionExists ? activeCategory : "all";
+      }
+      var productSearch = document.getElementById("productSearch");
+      if (productSearch) productSearch.value = "";
+      var sortFilter = document.getElementById("sortFilter");
+      if (sortFilter) sortFilter.value = "default";
+
+      var productsSection = document.getElementById("products");
+      if (productsSection) productsSection.scrollIntoView({ behavior: "smooth" });
+
+      renderProducts();
+    });
+  });
+
+  // Mobile nav
+  var mobileMenuBtn = document.getElementById("mobileMenuBtn");
+  var mainNav = document.getElementById("mainNav");
+  if (mobileMenuBtn && mainNav) {
+    mobileMenuBtn.addEventListener("click", function() {
+      mainNav.classList.toggle("mobile-open");
+    });
+    mainNav.querySelectorAll("a").forEach(function(link) {
+      link.addEventListener("click", function() {
+        mainNav.classList.remove("mobile-open");
+      });
+    });
+  }
+
+  // Footer year
+  var currentYear = document.getElementById("currentYear");
+  if (currentYear) {
+    currentYear.textContent = new Date().getFullYear();
+  }
+
+  // Initial render
   renderProducts();
   renderComparison();
+
 });
-
-/* =========================================
-   ✅ FIXED: Search Events
-   activeCategory और categoryFilter दोनों
-   reset होते हैं search से पहले
-   ========================================= */
-
-function doSearch() {
-  activeCategory = "all";
-  categoryFilter.value = "all";
-  renderProducts();
-}
-
-searchBtn.addEventListener("click", () => {
-  doSearch();
-  document.getElementById("products").scrollIntoView({ behavior: "smooth" });
-});
-
-productSearch.addEventListener("input", () => {
-  doSearch();
-});
-
-productSearch.addEventListener("keydown", event => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    doSearch();
-    document.getElementById("products").scrollIntoView({ behavior: "smooth" });
-  }
-});
-
-/* =========================================
-   Category Dropdown Filter
-   ========================================= */
-
-categoryFilter.addEventListener("change", () => {
-  activeCategory = "all";
-  renderProducts();
-});
-
-/* =========================================
-   Sort Filter
-   ========================================= */
-
-sortFilter.addEventListener("change", renderProducts);
-
-/* =========================================
-   Mobile Navigation
-   ========================================= */
-
-mobileMenuBtn.addEventListener("click", () => {
-  mainNav.classList.toggle("mobile-open");
-});
-
-mainNav.querySelectorAll("a").forEach(link => {
-  link.addEventListener("click", () => {
-    mainNav.classList.remove("mobile-open");
-  });
-});
-
-/* =========================================
-   Footer Year
-   ========================================= */
-
-currentYear.textContent = new Date().getFullYear();
-
-/* =========================================
-   Initial Render
-   ========================================= */
-
-renderProducts();
-renderComparison();
