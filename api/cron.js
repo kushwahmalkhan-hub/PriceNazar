@@ -1,6 +1,5 @@
 
 export default async function handler(req, res) {
-  // Allow only Vercel Cron requests
   const auth = req.headers.authorization || "";
   const secret = process.env.CRON_SECRET;
 
@@ -29,7 +28,6 @@ export default async function handler(req, res) {
   };
 
   try {
-    // Get tracked Flipkart products
     const response = await fetch(
       `${SUPABASE_URL}/rest/v1/tracked_products?store=eq.Flipkart&select=id,user_id,product_url,product_name,store,lowest_price`,
       { headers }
@@ -45,7 +43,6 @@ export default async function handler(req, res) {
     for (const item of products) {
       try {
         const url = new URL(item.product_url);
-
         const match = url.pathname.match(/\/p\/([^/?#]+)/i);
         const itmId = match?.[1]
           ? decodeURIComponent(match[1])
@@ -62,7 +59,9 @@ export default async function handler(req, res) {
                 "flipkart-product-data-api.p.rapidapi.com",
             },
             body: JSON.stringify(
-              itmId ? { itm_id: itmId } : { url: item.product_url }
+              itmId
+                ? { itm_id: itmId }
+                : { url: item.product_url }
             ),
           }
         );
@@ -115,7 +114,7 @@ export default async function handler(req, res) {
           throw new Error("Real price not found");
         }
 
-        // Save real price history
+        // Save price history
         const historyResponse = await fetch(
           `${SUPABASE_URL}/rest/v1/price_history`,
           {
@@ -148,7 +147,7 @@ export default async function handler(req, res) {
             ? price
             : Math.min(oldLowest, price);
 
-        // Update current price and lowest price
+        // Update current and lowest prices
         const updateResponse = await fetch(
           `${SUPABASE_URL}/rest/v1/tracked_products?id=eq.${encodeURIComponent(item.id)}`,
           {
@@ -168,11 +167,67 @@ export default async function handler(req, res) {
           throw new Error("Could not update product price");
         }
 
+        // Find active, untriggered price alerts
+        const alertParams = new URLSearchParams({
+          user_id: `eq.${item.user_id}`,
+          product_url: `eq.${item.product_url}`,
+          is_active: "eq.true",
+          triggered_at: "is.null",
+          select: "id,target_price",
+        });
+
+        const alertResponse = await fetch(
+          `${SUPABASE_URL}/rest/v1/price_alerts?${alertParams}`,
+          { headers }
+        );
+
+        if (!alertResponse.ok) {
+          throw new Error("Could not load price alerts");
+        }
+
+        const alerts = await alertResponse.json();
+        const triggeredAlerts = [];
+
+        for (const alert of alerts) {
+          const targetPrice = Number(alert.target_price);
+
+          if (
+            Number.isFinite(targetPrice) &&
+            targetPrice > 0 &&
+            price <= targetPrice
+          ) {
+            const triggerResponse = await fetch(
+              `${SUPABASE_URL}/rest/v1/price_alerts?id=eq.${encodeURIComponent(alert.id)}`,
+              {
+                method: "PATCH",
+                headers: {
+                  ...headers,
+                  Prefer: "return=minimal",
+                },
+                body: JSON.stringify({
+                  triggered_at: new Date().toISOString(),
+                  is_active: false,
+                }),
+              }
+            );
+
+            if (!triggerResponse.ok) {
+              throw new Error("Could not trigger price alert");
+            }
+
+            triggeredAlerts.push({
+              target_price: targetPrice,
+              triggered: true,
+            });
+          }
+        }
+
         results.push({
           product: item.product_name,
           price,
           lowest_price: lowestPrice,
           saved: true,
+          alerts_triggered: triggeredAlerts,
         });
       } catch (error) {
         results.push({
