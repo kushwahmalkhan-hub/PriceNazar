@@ -346,7 +346,6 @@ document.querySelectorAll(".category-card").forEach(button => {
 /* =========================================
    Compare Products
    ========================================= */
-
 function renderComparison() {
   if (!selectedProducts.length) {
     compareList.innerHTML = `
@@ -362,43 +361,56 @@ function renderComparison() {
     .filter(Boolean);
 
   compareList.innerHTML = `
-    <div class="comparison-grid">
-      ${selected.map(product => `
-        <article class="comparison-item">
-          <div class="comparison-image">
-            ${escapeHTML(product.image)}
-          </div>
+    <div class="comparison-table-wrap">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Features</th>
+            ${selected.map(product => `
+              <th>
+                ${escapeHTML(product.image)}
+                <br>
+                ${escapeHTML(product.name)}
+                <br>
+                <button
+                  class="compare-remove-btn"
+                  data-remove-id="${product.id}"
+                >
+                  Remove
+                </button>
+              </th>
+            `).join("")}
+          </tr>
+        </thead>
 
-          <h3>${escapeHTML(product.name)}</h3>
+        <tbody>
+          <tr>
+            <th>Category</th>
+            ${selected.map(product => `
+              <td>${escapeHTML(product.category)}</td>
+            `).join("")}
+          </tr>
 
-          <p class="comparison-category">
-            ${escapeHTML(product.category)}
-          </p>
+          <tr>
+            <th>Price</th>
+            ${selected.map(product => `
+              <td>${formatPrice(product.price)}</td>
+            `).join("")}
+          </tr>
 
-          <p class="comparison-price">
-            ${formatPrice(product.price)}
-          </p>
-
-          <p class="comparison-description">
-            ${escapeHTML(product.description)}
-          </p>
-
-          <button
-            class="compare-remove-btn"
-            data-remove-id="${product.id}"
-          >
-            Remove
-          </button>
-        </article>
-      `).join("")}
+          <tr>
+            <th>Description</th>
+            ${selected.map(product => `
+              <td>${escapeHTML(product.description)}</td>
+            `).join("")}
+          </tr>
+        </tbody>
+      </table>
     </div>
   `;
 }
 
-function toggleCompare(id) {
-  const productId = Number(id);
-
-  if (selectedProducts.includes(productId)) {
+es(productId)) {
     selectedProducts = selectedProducts.filter(
       selectedId => selectedId !== productId
     );
