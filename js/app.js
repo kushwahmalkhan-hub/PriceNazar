@@ -1,4 +1,3 @@
-
 /* =========================================
    PriceNazar - Electronics Catalog
    Search, Filter, Sort and Compare
@@ -285,6 +284,9 @@ function createProductCard(product) {
 
 /* =========================================
    Search, Filter and Sort
+   ✅ BUG FIX: matchesCategory की गलत
+   Smartwatches condition हटाई।
+   matchesActiveCategory सही रखी।
    ========================================= */
 
 function getFilteredProducts() {
@@ -304,13 +306,10 @@ function getFilteredProducts() {
       !searchTerm ||
       searchableText.includes(searchTerm);
 
+    // ✅ FIX: गलत Smartwatches condition हटाई
     const matchesCategory =
       category === "all" ||
-      product.category === category ||
-      (
-        category === "Tablets" &&
-        product.category === "Smartwatches"
-      );
+      product.category === category;
 
     const matchesActiveCategory =
       activeCategory === "all" ||
@@ -545,11 +544,13 @@ clearCompareBtn.addEventListener("click", () => {
 
 /* =========================================
    Search Button and Input
+   ✅ BUG FIX: activeCategory reset होता है
+   search से पहले ताकि सभी products दिखें
    ========================================= */
 
 searchBtn.addEventListener("click", () => {
-  activeCategory = "all";
-  categoryFilter.value = "all";
+  activeCategory = "all";          // ✅ Reset
+  categoryFilter.value = "all";    // ✅ Reset
 
   renderProducts();
 
@@ -559,8 +560,8 @@ searchBtn.addEventListener("click", () => {
 });
 
 productSearch.addEventListener("input", () => {
-  activeCategory = "all";
-  categoryFilter.value = "all";
+  activeCategory = "all";          // ✅ Reset
+  categoryFilter.value = "all";    // ✅ Reset
 
   renderProducts();
 });
@@ -569,8 +570,8 @@ productSearch.addEventListener("keydown", event => {
   if (event.key === "Enter") {
     event.preventDefault();
 
-    activeCategory = "all";
-    categoryFilter.value = "all";
+    activeCategory = "all";        // ✅ Reset
+    categoryFilter.value = "all";  // ✅ Reset
 
     renderProducts();
 
