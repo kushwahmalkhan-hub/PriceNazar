@@ -1,5 +1,7 @@
+
 /* =========================================
-   PriceNazar - Static Electronics Catalog
+   PriceNazar - Electronics Catalog
+   Search, Filter, Sort and Compare
    ========================================= */
 
 const products = [
@@ -9,7 +11,8 @@ const products = [
     category: "Smartphones",
     description: "Samsung flagship smartphone",
     price: null,
-    image: "📱"
+    image: "📱",
+    searchTerms: "samsung galaxy s series galaxy s samsung phone mobile"
   },
   {
     id: 2,
@@ -17,7 +20,8 @@ const products = [
     category: "Smartphones",
     description: "Apple smartphone",
     price: null,
-    image: "📱"
+    image: "📱",
+    searchTerms: "apple iphone ios mobile phone"
   },
   {
     id: 3,
@@ -25,7 +29,8 @@ const products = [
     category: "Smartphones",
     description: "OnePlus Android smartphone",
     price: null,
-    image: "📱"
+    image: "📱",
+    searchTerms: "oneplus one plus android smartphone mobile phone oneplus 15"
   },
   {
     id: 4,
@@ -33,7 +38,8 @@ const products = [
     category: "Laptops",
     description: "Laptop for gaming and performance",
     price: null,
-    image: "💻"
+    image: "💻",
+    searchTerms: "gaming laptop gaming notebook"
   },
   {
     id: 5,
@@ -41,7 +47,8 @@ const products = [
     category: "Laptops",
     description: "Portable laptop for everyday use",
     price: null,
-    image: "💻"
+    image: "💻",
+    searchTerms: "thin light laptop portable notebook"
   },
   {
     id: 6,
@@ -49,7 +56,8 @@ const products = [
     category: "Smart TVs",
     description: "Smart television",
     price: null,
-    image: "📺"
+    image: "📺",
+    searchTerms: "smart tv television led tv"
   },
   {
     id: 7,
@@ -57,7 +65,8 @@ const products = [
     category: "PC Parts",
     description: "Graphics card for gaming PCs",
     price: null,
-    image: "🎮"
+    image: "🎮",
+    searchTerms: "gaming graphics card gpu nvidia amd"
   },
   {
     id: 8,
@@ -65,7 +74,8 @@ const products = [
     category: "PC Parts",
     description: "CPU for desktop computers",
     price: null,
-    image: "🖥️"
+    image: "🖥️",
+    searchTerms: "desktop processor cpu intel amd"
   },
   {
     id: 9,
@@ -73,7 +83,8 @@ const products = [
     category: "PC Parts",
     description: "Desktop memory",
     price: null,
-    image: "💾"
+    image: "💾",
+    searchTerms: "ddr5 ram memory computer"
   },
   {
     id: 10,
@@ -81,7 +92,8 @@ const products = [
     category: "Accessories",
     description: "Wireless audio headphones",
     price: null,
-    image: "🎧"
+    image: "🎧",
+    searchTerms: "wireless headphones headset audio"
   },
   {
     id: 11,
@@ -89,7 +101,8 @@ const products = [
     category: "Accessories",
     description: "True wireless earbuds",
     price: null,
-    image: "🎵"
+    image: "🎵",
+    searchTerms: "bluetooth earbuds tws earphones"
   },
   {
     id: 12,
@@ -97,7 +110,8 @@ const products = [
     category: "Tablets",
     description: "Tablet for study and entertainment",
     price: null,
-    image: "📟"
+    image: "📟",
+    searchTerms: "android tablet tab"
   },
   {
     id: 13,
@@ -105,7 +119,8 @@ const products = [
     category: "Smartwatches",
     description: "Smart wearable watch",
     price: null,
-    image: "⌚"
+    image: "⌚",
+    searchTerms: "smartwatch smart watch wearable"
   },
   {
     id: 14,
@@ -113,7 +128,8 @@ const products = [
     category: "PC Parts",
     description: "External solid state drive",
     price: null,
-    image: "💽"
+    image: "💽",
+    searchTerms: "portable ssd external storage drive"
   },
   {
     id: 15,
@@ -121,7 +137,8 @@ const products = [
     category: "Accessories",
     description: "Wireless computer keyboard",
     price: null,
-    image: "⌨️"
+    image: "⌨️",
+    searchTerms: "wireless keyboard computer"
   },
   {
     id: 16,
@@ -129,7 +146,8 @@ const products = [
     category: "Accessories",
     description: "Mouse for gaming and work",
     price: null,
-    image: "🖱️"
+    image: "🖱️",
+    searchTerms: "gaming mouse computer mouse"
   }
 ];
 
@@ -170,6 +188,13 @@ function escapeHTML(value) {
   });
 }
 
+function normalizeText(value) {
+  return String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 function formatPrice(price) {
   if (typeof price !== "number" || !Number.isFinite(price)) {
     return "Check store";
@@ -201,13 +226,11 @@ function createProductCard(product) {
 
   return `
     <article class="product-card">
-
       <div class="product-image">
         <span>${escapeHTML(product.image)}</span>
       </div>
 
       <div class="product-info">
-
         <span class="product-category">
           ${escapeHTML(product.category)}
         </span>
@@ -229,7 +252,6 @@ function createProductCard(product) {
         </p>
 
         <div class="product-actions">
-
           <a
             class="primary-btn store-link"
             href="${getSearchUrl("amazon", product.name)}"
@@ -247,7 +269,6 @@ function createProductCard(product) {
           >
             Flipkart
           </a>
-
         </div>
 
         <button
@@ -257,7 +278,6 @@ function createProductCard(product) {
         >
           ${isSelected ? "✓ Added to Compare" : "＋ Compare"}
         </button>
-
       </div>
     </article>
   `;
@@ -268,16 +288,21 @@ function createProductCard(product) {
    ========================================= */
 
 function getFilteredProducts() {
-  const searchTerm = productSearch.value.trim().toLowerCase();
+  const searchTerm = normalizeText(productSearch.value);
   const category = categoryFilter.value;
   const sortValue = sortFilter.value;
 
   let filtered = products.filter(product => {
+    const searchableText = normalizeText([
+      product.name,
+      product.category,
+      product.description,
+      product.searchTerms || ""
+    ].join(" "));
 
     const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm) ||
-      product.category.toLowerCase().includes(searchTerm) ||
-      product.description.toLowerCase().includes(searchTerm);
+      !searchTerm ||
+      searchableText.includes(searchTerm);
 
     const matchesCategory =
       category === "all" ||
@@ -334,8 +359,17 @@ function renderProducts() {
         <div class="empty-icon">🔎</div>
         <h3>No products found</h3>
         <p>Try a different search term or category.</p>
+        <button class="primary-btn" id="resetSearchBtn">
+          Show All Products
+        </button>
       </div>
     `;
+
+    const resetButton = document.getElementById("resetSearchBtn");
+
+    if (resetButton) {
+      resetButton.addEventListener("click", resetSearch);
+    }
   } else {
     productGrid.innerHTML = filtered
       .map(createProductCard)
@@ -344,6 +378,15 @@ function renderProducts() {
 
   searchStatus.textContent =
     `${filtered.length} product${filtered.length === 1 ? "" : "s"} found`;
+}
+
+function resetSearch() {
+  productSearch.value = "";
+  categoryFilter.value = "all";
+  sortFilter.value = "default";
+  activeCategory = "all";
+
+  renderProducts();
 }
 
 /* =========================================
@@ -362,6 +405,7 @@ document.querySelectorAll(".category-card").forEach(button => {
         : "all";
 
     productSearch.value = "";
+    sortFilter.value = "default";
 
     document.getElementById("products").scrollIntoView({
       behavior: "smooth"
@@ -391,9 +435,7 @@ function renderComparison() {
 
   compareList.innerHTML = `
     <div class="comparison-table-wrap">
-
       <table class="comparison-table">
-
         <thead>
           <tr>
             <th>Features</th>
@@ -413,12 +455,10 @@ function renderComparison() {
                 </button>
               </th>
             `).join("")}
-
           </tr>
         </thead>
 
         <tbody>
-
           <tr>
             <th>Category</th>
 
@@ -442,15 +482,14 @@ function renderComparison() {
               <td>${escapeHTML(product.description)}</td>
             `).join("")}
           </tr>
-
         </tbody>
       </table>
     </div>
   `;
 }
 
-function toggleCompare(productId) {
-  productId = Number(productId);
+function toggleCompare(id) {
+  const productId = Number(id);
 
   if (selectedProducts.includes(productId)) {
     selectedProducts = selectedProducts.filter(
@@ -471,10 +510,9 @@ function toggleCompare(productId) {
 }
 
 /* =========================================
-   Event Listeners
+   Product Compare Button
    ========================================= */
 
-// Compare button
 productGrid.addEventListener("click", event => {
   const button = event.target.closest("[data-compare-id]");
 
@@ -483,7 +521,10 @@ productGrid.addEventListener("click", event => {
   toggleCompare(button.dataset.compareId);
 });
 
-// Remove button
+/* =========================================
+   Remove Product from Comparison
+   ========================================= */
+
 compareList.addEventListener("click", event => {
   const button = event.target.closest("[data-remove-id]");
 
@@ -492,18 +533,24 @@ compareList.addEventListener("click", event => {
   toggleCompare(button.dataset.removeId);
 });
 
-// Clear comparison
+/* =========================================
+   Clear Comparison
+   ========================================= */
+
 clearCompareBtn.addEventListener("click", () => {
   selectedProducts = [];
-
   renderProducts();
   renderComparison();
 });
 
-// Search button
+/* =========================================
+   Search Button and Input
+   ========================================= */
+
 searchBtn.addEventListener("click", () => {
   activeCategory = "all";
   categoryFilter.value = "all";
+
   renderProducts();
 
   document.getElementById("products").scrollIntoView({
@@ -511,18 +558,20 @@ searchBtn.addEventListener("click", () => {
   });
 });
 
-// Live search
 productSearch.addEventListener("input", () => {
   activeCategory = "all";
   categoryFilter.value = "all";
+
   renderProducts();
 });
 
-// Enter key search
 productSearch.addEventListener("keydown", event => {
   if (event.key === "Enter") {
+    event.preventDefault();
+
     activeCategory = "all";
     categoryFilter.value = "all";
+
     renderProducts();
 
     document.getElementById("products").scrollIntoView({
@@ -531,13 +580,19 @@ productSearch.addEventListener("keydown", event => {
   }
 });
 
-// Category dropdown
+/* =========================================
+   Category Filter
+   ========================================= */
+
 categoryFilter.addEventListener("change", () => {
   activeCategory = "all";
   renderProducts();
 });
 
-// Sort dropdown
+/* =========================================
+   Sort Filter
+   ========================================= */
+
 sortFilter.addEventListener("change", renderProducts);
 
 /* =========================================
