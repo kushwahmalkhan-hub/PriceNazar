@@ -736,3 +736,40 @@ button {
     font-size: 32px;
   }
 }
+
+/* Comparison table */
+.comparison-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: white;
+}
+
+.comparison-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.comparison-table thead th {
+  background: #eff6ff;
+}
+
+.comparison-table tbody th {
+  background: #f8fafc;
+  width: 145px;
+}
+
+.comparison-table .compare-remove-btn {
+  margin-top: 8px;
+}
