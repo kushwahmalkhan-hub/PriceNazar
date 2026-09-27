@@ -1,1524 +1,487 @@
 
-/* =========================================================
-   PriceNazar - Main Application JavaScript
-   ========================================================= */
-
-
-/* ================= DOM ELEMENTS ================= */
-
-const productSearch =
-    document.getElementById("productSearch");
-
-const trackProductBtn =
-    document.getElementById("trackProductBtn");
-
-const searchStatus =
-    document.getElementById("searchStatus");
-
-const trackerCard =
-    document.getElementById("trackerCard");
-
-const trackerEmpty =
-    document.getElementById("trackerEmpty");
-
-const trackerStore =
-    document.getElementById("trackerStore");
-
-const trackerProductName =
-    document.getElementById("trackerProductName");
-
-const trackerProductUrl =
-    document.getElementById("trackerProductUrl");
-
-const trackerCurrentPrice =
-    document.getElementById("trackerCurrentPrice");
-
-const trackerLowestPrice =
-    document.getElementById("trackerLowestPrice");
-
-const trackerUpdated =
-    document.getElementById("trackerUpdated");
-
-const priceChart =
-    document.getElementById("priceChart");
-
-const targetPrice =
-    document.getElementById("targetPrice");
-
-const saveAlertBtn =
-    document.getElementById("saveAlertBtn");
-
-const alertStatus =
-    document.getElementById("alertStatus");
-
-const mobileMenuBtn =
-    document.getElementById("mobileMenuBtn");
-
-const mainNav =
-    document.querySelector(".main-nav");
-
-
-/* ================= API AUTH ================= */
-
-async function getAuthHeaders() {
-
-    try {
-
-        if (
-            typeof supabaseClient === "undefined" ||
-            !supabaseClient
-        ) {
-            return null;
-        }
-
-        const {
-            data,
-            error
-        } = await supabaseClient.auth.getSession();
-
-        if (
-            error ||
-            !data ||
-            !data.session
-        ) {
-            return null;
-        }
-
-        return {
-            "Content-Type":
-                "application/json",
-
-            "Authorization":
-                `Bearer ${data.session.access_token}`
-        };
-
-    } catch (error) {
-
-        console.warn(
-            "Unable to get auth session:",
-            error
-        );
-
-        return null;
-    }
-}
-
-
-/* ================= HELPERS ================= */
-
-function formatPrice(value) {
-
-    if (
-        value === null ||
-        value === undefined ||
-        value === ""
-    ) {
-        return "₹—";
-    }
-
-    const number =
-        Number(value);
-
-    if (
-        Number.isNaN(number) ||
-        !Number.isFinite(number)
-    ) {
-        return "₹—";
-    }
-
-    return "₹" +
-        number.toLocaleString("en-IN");
-
-}
-
-
-function showSearchStatus(
-    message,
-    type = "info"
-) {
-
-    if (!searchStatus) {
-        return;
-    }
-
-    searchStatus.textContent =
-        message;
-
-    if (type === "error") {
-
-        searchStatus.style.color =
-            "#dc2626";
-
-    } else if (type === "success") {
-
-        searchStatus.style.color =
-            "#16a34a";
-
-    } else {
-
-        searchStatus.style.color =
-            "#2563eb";
-
-    }
-
-}
-
-
-function clearSearchStatus() {
-
-    if (searchStatus) {
-        searchStatus.textContent = "";
-    }
-
-}
-
-
-/* ================= URL DETECTION ================= */
-
-function detectStore(url) {
-
-    try {
-
-        const parsedUrl =
-            new URL(url);
-
-        const hostname =
-            parsedUrl.hostname
-                .toLowerCase()
-                .replace(/^www\./, "");
-
-        if (
-            hostname === "amazon.in" ||
-            hostname.endsWith(".amazon.in") ||
-            hostname === "amazon.com" ||
-            hostname.endsWith(".amazon.com") ||
-            hostname === "link.amazon"
-        ) {
-            return "amazon";
-        }
-
-        if (
-            hostname === "flipkart.com" ||
-            hostname.endsWith(".flipkart.com")
-        ) {
-            return "flipkart";
-        }
-
-        return null;
-
-    } catch (error) {
-
-        return null;
-
-    }
-
-}
-
-
-/* ================= URL VALIDATION ================= */
-
-function isValidProductUrl(url) {
-
-    const store =
-        detectStore(url);
-
-    return store !== null;
-
-}
-
-
-/* ================= PRODUCT DATA ================= */
-
-function createProductData(
-    store,
-    url,
-    savedProduct = null
-) {
-
-    /* ---------- REAL TRACKED PRODUCT ---------- */
-
-    const storeName =
-        store === "amazon"
-            ? "Amazon"
-            : "Flipkart";
-
-    const productName =
-        savedProduct?.product_name ||
-        savedProduct?.productName ||
-        "Tracked Product";
-
-    const currentPrice =
-        savedProduct?.current_price ??
-        savedProduct?.currentPrice ??
-        null;
-
-    const lowestPrice =
-        savedProduct?.lowest_price ??
-        savedProduct?.lowestPrice ??
-        null;
-
-    return {
-
-        store:
-            savedProduct?.store ||
-            storeName,
-
-        productName:
-            productName,
-
-        currentPrice:
-            currentPrice,
-
-        lowestPrice:
-            lowestPrice,
-
-        history:
-            Array.isArray(savedProduct?.history)
-                ? savedProduct.history
-                : [],
-
-        url:
-            savedProduct?.product_url ||
-            savedProduct?.url ||
-            url,
-
-        updatedAt:
-            new Date().toLocaleString(
-                "en-IN",
-                {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit"
-                }
-            )
-
+/* =========================================
+   PriceNazar - Static Electronics Catalog
+   No API, no price tracking
+   ========================================= */
+
+const products = [
+  {
+    id: 1,
+    name: "Samsung Galaxy S Series",
+    category: "Smartphones",
+    description: "Samsung flagship smartphone",
+    price: null,
+    image: "📱"
+  },
+  {
+    id: 2,
+    name: "Apple iPhone",
+    category: "Smartphones",
+    description: "Apple smartphone",
+    price: null,
+    image: "📱"
+  },
+  {
+    id: 3,
+    name: "OnePlus Smartphone",
+    category: "Smartphones",
+    description: "OnePlus Android smartphone",
+    price: null,
+    image: "📱"
+  },
+  {
+    id: 4,
+    name: "Gaming Laptop",
+    category: "Laptops",
+    description: "Laptop for gaming and performance",
+    price: null,
+    image: "💻"
+  },
+  {
+    id: 5,
+    name: "Thin and Light Laptop",
+    category: "Laptops",
+    description: "Portable laptop for everyday use",
+    price: null,
+    image: "💻"
+  },
+  {
+    id: 6,
+    name: "Smart LED TV",
+    category: "Smart TVs",
+    description: "Smart television",
+    price: null,
+    image: "📺"
+  },
+  {
+    id: 7,
+    name: "Gaming Graphics Card",
+    category: "PC Parts",
+    description: "Graphics card for gaming PCs",
+    price: null,
+    image: "🎮"
+  },
+  {
+    id: 8,
+    name: "Desktop Processor",
+    category: "PC Parts",
+    description: "CPU for desktop computers",
+    price: null,
+    image: "🖥️"
+  },
+  {
+    id: 9,
+    name: "DDR5 RAM",
+    category: "PC Parts",
+    description: "Desktop memory",
+    price: null,
+    image: "💾"
+  },
+  {
+    id: 10,
+    name: "Wireless Headphones",
+    category: "Accessories",
+    description: "Wireless audio headphones",
+    price: null,
+    image: "🎧"
+  },
+  {
+    id: 11,
+    name: "Bluetooth Earbuds",
+    category: "Accessories",
+    description: "True wireless earbuds",
+    price: null,
+    image: "🎵"
+  },
+  {
+    id: 12,
+    name: "Android Tablet",
+    category: "Tablets",
+    description: "Tablet for study and entertainment",
+    price: null,
+    image: "📟"
+  },
+  {
+    id: 13,
+    name: "Smartwatch",
+    category: "Smartwatches",
+    description: "Smart wearable watch",
+    price: null,
+    image: "⌚"
+  },
+  {
+    id: 14,
+    name: "Portable SSD",
+    category: "PC Parts",
+    description: "External solid state drive",
+    price: null,
+    image: "💽"
+  },
+  {
+    id: 15,
+    name: "Wireless Keyboard",
+    category: "Accessories",
+    description: "Wireless computer keyboard",
+    price: null,
+    image: "⌨️"
+  },
+  {
+    id: 16,
+    name: "Gaming Mouse",
+    category: "Accessories",
+    description: "Mouse for gaming and work",
+    price: null,
+    image: "🖱️"
+  }
+];
+
+const productGrid = document.getElementById("productGrid");
+const productSearch = document.getElementById("productSearch");
+const searchBtn = document.getElementById("searchBtn");
+const categoryFilter = document.getElementById("categoryFilter");
+const sortFilter = document.getElementById("sortFilter");
+const searchStatus = document.getElementById("searchStatus");
+const compareList = document.getElementById("compareList");
+const clearCompareBtn = document.getElementById("clearCompareBtn");
+const currentYear = document.getElementById("currentYear");
+const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+const mainNav = document.getElementById("mainNav");
+
+let selectedProducts = [];
+let activeCategory = "all";
+
+/* =========================================
+   Helpers
+   ========================================= */
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, function (char) {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
     };
-
+    return entities[char];
+  });
 }
 
+function formatPrice(price) {
+  if (typeof price !== "number" || !Number.isFinite(price)) {
+    return "Check store";
+  }
 
-/* ================= RENDER TRACKER ================= */
-
-function renderTracker(product) {
-
-    if (!product) {
-        return;
-    }
-
-    if (trackerCard) {
-        trackerCard.classList.remove("hidden");
-    }
-
-    if (trackerEmpty) {
-        trackerEmpty.classList.add("hidden");
-    }
-
-    if (trackerStore) {
-
-        trackerStore.textContent =
-            product.store;
-
-    }
-
-    if (trackerProductName) {
-
-        trackerProductName.textContent =
-            product.productName;
-
-    }
-
-    if (trackerProductUrl) {
-
-        trackerProductUrl.textContent =
-            product.url;
-
-    }
-
-    if (trackerCurrentPrice) {
-
-        trackerCurrentPrice.textContent =
-            formatPrice(
-                product.currentPrice
-            );
-
-    }
-
-    if (trackerLowestPrice) {
-
-        trackerLowestPrice.textContent =
-            formatPrice(
-                product.lowestPrice
-            );
-
-    }
-
-    if (trackerUpdated) {
-
-        trackerUpdated.textContent =
-            product.updatedAt;
-
-    }
-
-    renderPriceHistory(
-        product.history
-    );
-
-    try {
-
-        localStorage.setItem(
-            "priceNazarTrackedProduct",
-            JSON.stringify(product)
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Could not save product:",
-            error
-        );
-
-    }
-
-    setTimeout(() => {
-
-        const tracker =
-            document.getElementById(
-                "tracker"
-            );
-
-        if (tracker) {
-
-            tracker.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
-
-        }
-
-    }, 100);
-
+  return "₹" + price.toLocaleString("en-IN");
 }
 
+function getSearchUrl(store, productName) {
+  const query = encodeURIComponent(productName);
 
-/* ================= PRICE HISTORY ================= */
+  if (store === "amazon") {
+    return `https://www.amazon.in/s?k=${query}`;
+  }
 
-function renderPriceHistory(history) {
-
-    if (!priceChart) {
-        return;
-    }
-
-    priceChart.innerHTML = "";
-
-    if (
-        !Array.isArray(history) ||
-        history.length === 0
-    ) {
-
-        priceChart.innerHTML =
-            "<p>No price history available.</p>";
-
-        return;
-    }
-
-    const validHistory =
-        history.filter(
-            item =>
-                item &&
-                Number.isFinite(
-                    Number(item.price)
-                )
-        );
-
-    if (validHistory.length === 0) {
-
-        priceChart.innerHTML =
-            "<p>No price history available.</p>";
-
-        return;
-    }
-
-    const prices =
-        validHistory.map(
-            item =>
-                Number(item.price)
-        );
-
-    const width = 700;
-    const height = 300;
-
-    const paddingLeft = 65;
-    const paddingRight = 25;
-    const paddingTop = 25;
-    const paddingBottom = 55;
-
-    const chartWidth =
-        width -
-        paddingLeft -
-        paddingRight;
-
-    const chartHeight =
-        height -
-        paddingTop -
-        paddingBottom;
-
-    const maxPrice =
-        Math.max(...prices);
-
-    const minPrice =
-        Math.min(...prices);
-
-    const range =
-        maxPrice - minPrice || 1;
-
-
-    /* ================= POINTS ================= */
-
-    const points =
-        validHistory.map(
-            (item, index) => {
-
-                const x =
-                    paddingLeft +
-                    (
-                        index /
-                        Math.max(
-                            validHistory.length - 1,
-                            1
-                        )
-                    ) *
-                    chartWidth;
-
-                const y =
-                    paddingTop +
-                    (
-                        (maxPrice -
-                            Number(item.price)) /
-                        range
-                    ) *
-                    chartHeight;
-
-                return {
-
-                    x,
-
-                    y,
-
-                    price:
-                        Number(item.price),
-
-                    date:
-                        item.date ||
-                        item.recorded_at ||
-                        ""
-
-                };
-
-            }
-        );
-
-
-    /* ================= SVG ================= */
-
-    const svgNS =
-        "http://www.w3.org/2000/svg";
-
-    const svg =
-        document.createElementNS(
-            svgNS,
-            "svg"
-        );
-
-    svg.setAttribute(
-        "viewBox",
-        `0 0 ${width} ${height}`
-    );
-
-    svg.setAttribute(
-        "width",
-        "100%"
-    );
-
-    svg.setAttribute(
-        "height",
-        "300"
-    );
-
-    svg.style.display =
-        "block";
-
-    svg.style.overflow =
-        "visible";
-
-
-    /* ================= GRID LINES ================= */
-
-    for (let i = 0; i <= 4; i++) {
-
-        const y =
-            paddingTop +
-            (chartHeight / 4) * i;
-
-        const line =
-            document.createElementNS(
-                svgNS,
-                "line"
-            );
-
-        line.setAttribute(
-            "x1",
-            paddingLeft
-        );
-
-        line.setAttribute(
-            "x2",
-            width - paddingRight
-        );
-
-        line.setAttribute(
-            "y1",
-            y
-        );
-
-        line.setAttribute(
-            "y2",
-            y
-        );
-
-        line.setAttribute(
-            "stroke",
-            "rgba(148,163,184,0.20)"
-        );
-
-        line.setAttribute(
-            "stroke-width",
-            "1"
-        );
-
-        svg.appendChild(
-            line
-        );
-
-
-        /* Y-axis price */
-
-        const priceValue =
-            maxPrice -
-            (
-                range / 4
-            ) * i;
-
-        const text =
-            document.createElementNS(
-                svgNS,
-                "text"
-            );
-
-        text.setAttribute(
-            "x",
-            8
-        );
-
-        text.setAttribute(
-            "y",
-            y + 4
-        );
-
-        text.setAttribute(
-            "fill",
-            "#94a3b8"
-        );
-
-        text.setAttribute(
-            "font-size",
-            "12"
-        );
-
-        text.textContent =
-            formatPrice(
-                Math.round(priceValue)
-            );
-
-        svg.appendChild(
-            text
-        );
-
-    }
-
-
-    /* ================= LINE ================= */
-
-    const pathData =
-        points
-            .map(
-                (point, index) =>
-                    `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`
-            )
-            .join(" ");
-
-    const path =
-        document.createElementNS(
-            svgNS,
-            "path"
-        );
-
-    path.setAttribute(
-        "d",
-        pathData
-    );
-
-    path.setAttribute(
-        "fill",
-        "none"
-    );
-
-    path.setAttribute(
-        "stroke",
-        "#60a5fa"
-    );
-
-    path.setAttribute(
-        "stroke-width",
-        "4"
-    );
-
-    path.setAttribute(
-        "stroke-linecap",
-        "round"
-    );
-
-    path.setAttribute(
-        "stroke-linejoin",
-        "round"
-    );
-
-    svg.appendChild(
-        path
-    );
-
-
-    /* ================= POINTS + LABELS ================= */
-
-    points.forEach(
-        point => {
-
-            const circle =
-                document.createElementNS(
-                    svgNS,
-                    "circle"
-                );
-
-            circle.setAttribute(
-                "cx",
-                point.x
-            );
-
-            circle.setAttribute(
-                "cy",
-                point.y
-            );
-
-            circle.setAttribute(
-                "r",
-                "5"
-            );
-
-            circle.setAttribute(
-                "fill",
-                "#60a5fa"
-            );
-
-            circle.setAttribute(
-                "stroke",
-                "#ffffff"
-            );
-
-            circle.setAttribute(
-                "stroke-width",
-                "2"
-            );
-
-            svg.appendChild(
-                circle
-            );
-
-
-            /* Price label */
-
-            const priceText =
-                document.createElementNS(
-                    svgNS,
-                    "text"
-                );
-
-            priceText.setAttribute(
-                "x",
-                point.x
-            );
-
-            priceText.setAttribute(
-                "y",
-                point.y - 12
-            );
-
-            priceText.setAttribute(
-                "text-anchor",
-                "middle"
-            );
-
-            priceText.setAttribute(
-                "fill",
-                "#e2e8f0"
-            );
-
-            priceText.setAttribute(
-                "font-size",
-                "11"
-            );
-
-            priceText.setAttribute(
-                "font-weight",
-                "600"
-            );
-
-            priceText.textContent =
-                formatPrice(
-                    point.price
-                );
-
-            svg.appendChild(
-                priceText
-            );
-
-
-            /* Date label */
-
-            const dateText =
-                document.createElementNS(
-                    svgNS,
-                    "text"
-                );
-
-            dateText.setAttribute(
-                "x",
-                point.x
-            );
-
-            dateText.setAttribute(
-                "y",
-                height - 18
-            );
-
-            dateText.setAttribute(
-                "text-anchor",
-                "middle"
-            );
-
-            dateText.setAttribute(
-                "fill",
-                "#94a3b8"
-            );
-
-            dateText.setAttribute(
-                "font-size",
-                "11"
-            );
-
-            dateText.textContent =
-                point.date;
-
-            svg.appendChild(
-                dateText
-            );
-
-        }
-    );
-
-    priceChart.appendChild(
-        svg
-    );
-
+  return `https://www.flipkart.com/search?q=${query}`;
 }
 
-
-/* ================= LOAD PRICE HISTORY ================= */
-
-async function loadPriceHistory(productUrl) {
-
-    if (!productUrl) {
-        return null;
-    }
-
-    try {
-
-        const authHeaders =
-            await getAuthHeaders();
-
-        const headers =
-            authHeaders || {
-                "Content-Type":
-                    "application/json"
-            };
-
-        const response =
-            await fetch(
-                `/api/history?product_url=${encodeURIComponent(productUrl)}`,
-                {
-                    method: "GET",
-                    headers: headers
-                }
-            );
-
-        const result =
-            await response.json();
-
-        if (
-            response.ok &&
-            result.success &&
-            Array.isArray(result.history)
-        ) {
-
-            renderPriceHistory(
-                result.history
-            );
-
-
-            /* Update local saved product */
-
-            const savedProduct =
-                getStoredProduct();
-
-            if (
-                savedProduct &&
-                savedProduct.url === productUrl
-            ) {
-
-                savedProduct.history =
-                    result.history;
-
-                try {
-
-                    localStorage.setItem(
-                        "priceNazarTrackedProduct",
-                        JSON.stringify(
-                            savedProduct
-                        )
-                    );
-
-                } catch (storageError) {
-
-                    console.warn(
-                        "Could not update stored history:",
-                        storageError
-                    );
-
-                }
-
-            }
-
-            return result;
-
-        }
-
-        console.warn(
-            "Price history unavailable:",
-            result.message ||
-            "Unknown error"
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "History API request failed:",
-            error
-        );
-
-    }
-
-    return null;
-
+function getProductById(id) {
+  return products.find(product => product.id === Number(id));
 }
 
+/* =========================================
+   Product Cards
+   ========================================= */
 
-/* ================= TRACK PRODUCT ================= */
+function createProductCard(product) {
+  const isSelected = selectedProducts.includes(product.id);
 
-async function trackProduct() {
+  return `
+    <article class="product-card">
+      <div class="product-image">
+        <span>${escapeHTML(product.image)}</span>
+      </div>
 
-    const url =
-        productSearch
-            ? productSearch.value.trim()
-            : "";
+      <div class="product-info">
+        <span class="product-category">
+          ${escapeHTML(product.category)}
+        </span>
 
-    clearSearchStatus();
+        <h3 class="product-name">
+          ${escapeHTML(product.name)}
+        </h3>
 
-    if (!url) {
+        <p class="product-description">
+          ${escapeHTML(product.description)}
+        </p>
 
-        showSearchStatus(
-            "Please paste an Amazon or Flipkart product URL.",
-            "error"
-        );
+        <div class="product-price">
+          ${formatPrice(product.price)}
+        </div>
 
-        return;
+        <p class="price-note">
+          Price may vary by store. Check the retailer for the latest price.
+        </p>
 
-    }
+        <div class="product-actions">
+          <a
+            class="primary-btn store-link"
+            href="${getSearchUrl("amazon", product.name)}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Amazon
+          </a>
 
-    if (!isValidProductUrl(url)) {
+          <a
+            class="secondary-btn store-link"
+            href="${getSearchUrl("flipkart", product.name)}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Flipkart
+          </a>
+        </div>
 
-        showSearchStatus(
-            "Please enter a valid Amazon.in or Flipkart.com product URL.",
-            "error"
-        );
+        <button
+          class="compare-btn ${isSelected ? "selected" : ""}"
+          data-compare-id="${product.id}"
+          ${isSelected ? "aria-pressed='true'" : "aria-pressed='false'"}
+        >
+          ${isSelected ? "✓ Added to Compare" : "＋ Compare"}
+        </button>
+      </div>
+    </article>
+  `;
+}
 
-        return;
+/* =========================================
+   Search, Filter and Sort
+   ========================================= */
 
-    }
+function getFilteredProducts() {
+  const searchTerm = productSearch.value.trim().toLowerCase();
+  const category = categoryFilter.value;
+  const sortValue = sortFilter.value;
 
-    const store =
-        detectStore(url);
+  let filtered = products.filter(product => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchTerm) ||
+      product.category.toLowerCase().includes(searchTerm) ||
+      product.description.toLowerCase().includes(searchTerm);
 
-    showSearchStatus(
-        "Checking product...",
-        "info"
+    const matchesCategory =
+      category === "all" || product.category === category;
+
+    const matchesActiveCategory =
+      activeCategory === "all" ||
+      product.category === activeCategory;
+
+    return matchesSearch && matchesCategory && matchesActiveCategory;
+  });
+
+  if (sortValue === "name-asc") {
+    filtered.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sortValue === "price-asc") {
+    filtered.sort((a, b) => {
+      if (a.price == null) return 1;
+      if (b.price == null) return -1;
+      return a.price - b.price;
+    });
+  } else if (sortValue === "price-desc") {
+    filtered.sort((a, b) => {
+      if (a.price == null) return 1;
+      if (b.price == null) return -1;
+      return b.price - a.price;
+    });
+  }
+
+  return filtered;
+}
+
+function renderProducts() {
+  const filtered = getFilteredProducts();
+
+  if (!filtered.length) {
+    productGrid.innerHTML = `
+      <div class="tracker-empty">
+        <div class="empty-icon">🔎</div>
+        <h3>No products found</h3>
+        <p>Try a different search term or category.</p>
+      </div>
+    `;
+  } else {
+    productGrid.innerHTML = filtered.map(createProductCard).join("");
+  }
+
+  searchStatus.textContent =
+    `${filtered.length} product${filtered.length === 1 ? "" : "s"} found`;
+}
+
+/* =========================================
+   Category Selection
+   ========================================= */
+
+document.querySelectorAll(".category-card").forEach(button => {
+  button.addEventListener("click", () => {
+    activeCategory = button.dataset.category;
+
+    categoryFilter.value =
+      [...categoryFilter.options].some(
+        option => option.value === activeCategory
+      )
+        ? activeCategory
+        : "all";
+
+    productSearch.value = "";
+
+    document.getElementById("products").scrollIntoView({
+      behavior: "smooth"
+    });
+
+    renderProducts();
+  });
+});
+
+/* =========================================
+   Compare Products
+   ========================================= */
+
+function renderComparison() {
+  if (!selectedProducts.length) {
+    compareList.innerHTML = `
+      <p class="compare-empty">
+        Select products using the Compare button on a product card.
+      </p>
+    `;
+    return;
+  }
+
+  const selected = selectedProducts
+    .map(getProductById)
+    .filter(Boolean);
+
+  compareList.innerHTML = `
+    <div class="comparison-grid">
+      ${selected.map(product => `
+        <article class="comparison-item">
+          <div class="comparison-image">
+            ${escapeHTML(product.image)}
+          </div>
+
+          <h3>${escapeHTML(product.name)}</h3>
+
+          <p class="comparison-category">
+            ${escapeHTML(product.category)}
+          </p>
+
+          <p class="comparison-price">
+            ${formatPrice(product.price)}
+          </p>
+
+          <p class="comparison-description">
+            ${escapeHTML(product.description)}
+          </p>
+
+          <button
+            class="compare-remove-btn"
+            data-remove-id="${product.id}"
+          >
+            Remove
+          </button>
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
+
+function toggleCompare(id) {
+  const productId = Number(id);
+
+  if (selectedProducts.includes(productId)) {
+    selectedProducts = selectedProducts.filter(
+      selectedId => selectedId !== productId
     );
-
-    if (trackProductBtn) {
-
-        trackProductBtn.disabled =
-            true;
-
-        trackProductBtn.textContent =
-            "Checking...";
-
+  } else {
+    if (selectedProducts.length >= 3) {
+      searchStatus.textContent =
+        "You can compare up to 3 products at a time.";
+      return;
     }
 
-    try {
+    selectedProducts.push(productId);
+  }
 
-        /* Get logged-in user's session */
-
-        const authHeaders =
-            await getAuthHeaders();
-
-        const headers =
-            authHeaders || {
-                "Content-Type":
-                    "application/json"
-            };
-
-        const response =
-            await fetch(
-                "/api/track",
-                {
-                    method: "POST",
-
-                    headers:
-                        headers,
-
-                    body:
-                        JSON.stringify({
-                            url: url
-                        })
-                }
-            );
-
-        const result =
-            await response.json();
-
-        if (
-            response.ok &&
-            result.success
-        ) {
-
-            /* Use the real product returned by the API */
-
-            const product =
-                createProductData(
-                    store,
-                    url,
-                    result.product
-                );
-
-            renderTracker(
-                product
-            );
-
-            showSearchStatus(
-                `${result.store || product.store} product added successfully.`,
-                "success"
-            );
-
-            /* Load saved price history */
-
-            await loadPriceHistory(
-                url
-            );
-
-        } else {
-
-            throw new Error(
-                result.message ||
-                "Unable to track product."
-            );
-
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Track API request failed:",
-            error
-        );
-
-        /* Show a safe local product without fake prices */
-
-        const product =
-            createProductData(
-                store,
-                url
-            );
-
-        renderTracker(
-            product
-        );
-
-        showSearchStatus(
-            "Unable to connect to the tracking service. Please try again.",
-            "error"
-        );
-
-    }
-
-    finally {
-
-        if (trackProductBtn) {
-
-            trackProductBtn.disabled =
-                false;
-
-            trackProductBtn.textContent =
-                "Track Product";
-
-        }
-
-    }
-
+  renderProducts();
+  renderComparison();
 }
 
+/* =========================================
+   Event Listeners
+   ========================================= */
 
-/* ================= SAVE ALERT ================= */
+productGrid.addEventListener("click", event => {
+  const button = event.target.closest("[data-compare-id]");
 
-async function savePriceAlert() {
+  if (!button) return;
 
-    const value =
-        targetPrice
-            ? Number(targetPrice.value)
-            : 0;
+  toggleCompare(button.dataset.compareId);
+});
 
-    if (!value || value <= 0) {
+compareList.addEventListener("click", event => {
+  const button = event.target.closest("[data-remove-id]");
 
-        if (alertStatus) {
+  if (!button) return;
 
-            alertStatus.textContent =
-                "Please enter a valid target price.";
+  toggleCompare(button.dataset.removeId);
+});
 
-            alertStatus.style.color =
-                "#dc2626";
+clearCompareBtn.addEventListener("click", () => {
+  selectedProducts = [];
+  renderProducts();
+  renderComparison();
+});
 
-        }
+searchBtn.addEventListener("click", renderProducts);
 
-        return;
-    }
+productSearch.addEventListener("input", renderProducts);
 
-    const savedProduct =
-        getStoredProduct();
+productSearch.addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    renderProducts();
+  }
+});
 
-    if (
-        !savedProduct ||
-        !savedProduct.url
-    ) {
+categoryFilter.addEventListener("change", () => {
+  activeCategory = "all";
+  renderProducts();
+});
 
-        if (alertStatus) {
+sortFilter.addEventListener("change", renderProducts);
 
-            alertStatus.textContent =
-                "Please track a product first.";
+/* =========================================
+   Mobile Navigation
+   ========================================= */
 
-            alertStatus.style.color =
-                "#dc2626";
+mobileMenuBtn.addEventListener("click", () => {
+  mainNav.classList.toggle("mobile-open");
+});
 
-        }
+mainNav.querySelectorAll("a").forEach(link => {
+  link.addEventListener("click", () => {
+    mainNav.classList.remove("mobile-open");
+  });
+});
 
-        return;
-    }
+/* =========================================
+   Footer Year
+   ========================================= */
 
-    try {
+currentYear.textContent = new Date().getFullYear();
 
-        /* Get logged-in user's session */
+/* =========================================
+   Initial Render
+   ========================================= */
 
-        const authHeaders =
-            await getAuthHeaders();
-
-        if (!authHeaders) {
-
-            if (alertStatus) {
-
-                alertStatus.textContent =
-                    "Please login to create a price alert.";
-
-                alertStatus.style.color =
-                    "#dc2626";
-
-            }
-
-            return;
-        }
-
-        if (alertStatus) {
-
-            alertStatus.textContent =
-                "Saving price alert...";
-
-            alertStatus.style.color =
-                "#2563eb";
-
-        }
-
-        const response =
-            await fetch(
-                "/api/alerts",
-                {
-                    method: "POST",
-
-                    headers:
-                        authHeaders,
-
-                    body:
-                        JSON.stringify({
-
-                            target_price:
-                                value,
-
-                            product_url:
-                                savedProduct.url,
-
-                            product_name:
-                                savedProduct.productName ||
-                                "",
-
-                            store:
-                                savedProduct.store ||
-                                ""
-
-                        })
-                }
-            );
-
-        const result =
-            await response.json();
-
-        if (
-            !response.ok ||
-            !result.success
-        ) {
-
-            throw new Error(
-                result.message ||
-                "Unable to save price alert."
-            );
-
-        }
-
-        /* Save local copy for UI */
-
-        const alertData = {
-
-            targetPrice:
-                value,
-
-            productUrl:
-                savedProduct.url,
-
-            createdAt:
-                new Date().toISOString()
-
-        };
-
-        try {
-
-            localStorage.setItem(
-                "priceNazarAlert",
-                JSON.stringify(
-                    alertData
-                )
-            );
-
-        } catch (storageError) {
-
-            console.warn(
-                "Could not save local alert:",
-                storageError
-            );
-
-        }
-
-        if (alertStatus) {
-
-            alertStatus.textContent =
-                `Price alert saved for ${formatPrice(value)}.`;
-
-            alertStatus.style.color =
-                "#16a34a";
-
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Price alert error:",
-            error
-        );
-
-        if (alertStatus) {
-
-            alertStatus.textContent =
-                error.message ||
-                "Unable to save price alert.";
-
-            alertStatus.style.color =
-                "#dc2626";
-
-        }
-
-    }
-
-}
-
-
-/* ================= LOAD STORED PRODUCT ================= */
-
-function getStoredProduct() {
-
-    try {
-
-        const data =
-            localStorage.getItem(
-                "priceNazarTrackedProduct"
-            );
-
-        if (!data) {
-            return null;
-        }
-
-        return JSON.parse(data);
-
-    } catch (error) {
-
-        return null;
-
-    }
-
-}
-
-
-/* ================= RESTORE TRACKER ================= */
-
-function restoreTracker() {
-
-    const product =
-        getStoredProduct();
-
-    if (product) {
-
-        renderTracker(
-            product
-        );
-
-    }
-
-}
-
-
-/* ================= RESTORE ALERT ================= */
-
-function restoreAlert() {
-
-    try {
-
-        const saved =
-            localStorage.getItem(
-                "priceNazarAlert"
-            );
-
-        if (!saved) {
-            return;
-        }
-
-        const alertData =
-            JSON.parse(saved);
-
-        if (
-            targetPrice &&
-            alertData.targetPrice
-        ) {
-
-            targetPrice.value =
-                alertData.targetPrice;
-
-        }
-
-        if (alertStatus) {
-
-            alertStatus.textContent =
-                `Saved target price: ${formatPrice(
-                    alertData.targetPrice
-                )}`;
-
-            alertStatus.style.color =
-                "#16a34a";
-
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Could not restore alert."
-        );
-
-    }
-
-}
-
-
-/* ================= MOBILE MENU ================= */
-
-if (mobileMenuBtn) {
-
-    mobileMenuBtn.addEventListener(
-        "click",
-        () => {
-
-            if (!mainNav) {
-                return;
-            }
-
-            const isOpen =
-                mainNav.classList.contains(
-                    "mobile-open"
-                );
-
-            if (isOpen) {
-
-                mainNav.classList.remove(
-                    "mobile-open"
-                );
-
-                mainNav.style.display =
-                    "";
-
-            } else {
-
-                mainNav.classList.add(
-                    "mobile-open"
-                );
-
-                mainNav.style.display =
-                    "flex";
-
-                mainNav.style.position =
-                    "absolute";
-
-                mainNav.style.top =
-                    "64px";
-
-                mainNav.style.left =
-                    "14px";
-
-                mainNav.style.right =
-                    "14px";
-
-                mainNav.style.padding =
-                    "15px";
-
-                mainNav.style.background =
-                    "#ffffff";
-
-                mainNav.style.border =
-                    "1px solid #e5e7eb";
-
-                mainNav.style.borderRadius =
-                    "14px";
-
-                mainNav.style.flexDirection =
-                    "column";
-
-                mainNav.style.alignItems =
-                    "flex-start";
-
-                mainNav.style.gap =
-                    "15px";
-
-                mainNav.style.boxShadow =
-                    "0 15px 35px rgba(15,23,42,.12)";
-
-            }
-
-        }
-    );
-
-}
-
-
-/* ================= EVENT LISTENERS ================= */
-
-if (trackProductBtn) {
-
-    trackProductBtn.addEventListener(
-        "click",
-        trackProduct
-    );
-
-}
-
-if (productSearch) {
-
-    productSearch.addEventListener(
-        "keydown",
-        (event) => {
-
-            if (
-                event.key === "Enter"
-            ) {
-
-                event.preventDefault();
-
-                trackProduct();
-
-            }
-
-        }
-    );
-
-}
-
-if (saveAlertBtn) {
-
-    saveAlertBtn.addEventListener(
-        "click",
-        savePriceAlert
-    );
-
-}
-
-
-/* ================= INITIALIZE ================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        restoreTracker();
-
-        restoreAlert();
-
-    }
-);
+renderProducts();
+renderComparison();
