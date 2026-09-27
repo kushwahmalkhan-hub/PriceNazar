@@ -84,7 +84,7 @@ button {
   color: var(--primary);
 }
 
-.main-nav {
+.main-nav.mobile-open {
   display: flex;
   align-items: center;
   gap: 30px;
