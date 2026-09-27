@@ -1,4 +1,3 @@
-
 /* =========================================
    PriceNazar - Static Electronics Catalog
    No API, no price tracking
@@ -274,12 +273,12 @@ function getFilteredProducts() {
       category === "all" || product.category === category;
 
     const matchesActiveCategory =
-  activeCategory === "all" ||
-  product.category === activeCategory ||
-  (
-    activeCategory === "Tablets" &&
-    ["Tablets", "Smartwatches"].includes(product.category)
-  );
+      activeCategory === "all" ||
+      product.category === activeCategory ||
+      (
+        activeCategory === "Tablets" &&
+        ["Tablets", "Smartwatches"].includes(product.category)
+      );
 
     return matchesSearch && matchesCategory && matchesActiveCategory;
   });
@@ -350,6 +349,7 @@ document.querySelectorAll(".category-card").forEach(button => {
 /* =========================================
    Compare Products
    ========================================= */
+
 function renderComparison() {
   if (!selectedProducts.length) {
     compareList.innerHTML = `
@@ -414,7 +414,14 @@ function renderComparison() {
   `;
 }
 
-es(productId)) {
+/* =========================================
+   Toggle Compare
+   ========================================= */
+
+function toggleCompare(id) {
+  const productId = Number(id);
+
+  if (selectedProducts.includes(productId)) {
     selectedProducts = selectedProducts.filter(
       selectedId => selectedId !== productId
     );
