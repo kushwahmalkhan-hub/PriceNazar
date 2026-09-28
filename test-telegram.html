@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telegram Bot Test</title>
+</head>
+<body style="font-family:Arial;text-align:center;padding:30px">
+
+  <h2>PriceNazar Telegram Test</h2>
+  <p>बटन दबाकर Telegram पर टेस्ट मैसेज भेजें।</p>
+
+  <button id="sendBtn" style="padding:15px 25px;font-size:18px">
+    Send Test Message
+  </button>
+
+  <p id="status"></p>
+
+  <script>
+    const button = document.getElementById("sendBtn");
+    const status = document.getElementById("status");
+
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      status.textContent = "मैसेज भेजा जा रहा है...";
+
+      try {
+        const response = await fetch("/api/telegram", {
+          method: "POST"
+        });
+
+        const data = await response.json();
+
+        status.textContent = response.ok
+          ? "✅ Telegram पर मैसेज भेज दिया गया!"
+          : "❌ Error: " + (data.description || data.error || "कुछ गड़बड़ हुई");
+
+      } catch (error) {
+        status.textContent = "❌ कनेक्शन में समस्या हुई।";
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+</html>
