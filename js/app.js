@@ -203,9 +203,9 @@ function formatPrice(price) {
 }
 
 function getSearchUrl(store, productName) {
-  const query = encodeURIComponent(productName);
+  var query = encodeURIComponent(productName);
   if (store === "amazon") {
-    return "https://www.amazon.in/s?k=" + query;
+    return "https://www.amazon.in/s?k=" + query + "&tag=pricenazar02-21";
   }
   return "https://www.flipkart.com/search?q=" + query;
 }
