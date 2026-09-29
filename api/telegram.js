@@ -10,28 +10,42 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Bot token missing" });
   }
 
-  const message = `🔥 Amazon Deal
+  const { title, price, mrp, link, image } = req.body || {};
 
-🛒 Product: Amazon Deal
+  if (!title || !link) {
+    return res.status(400).json({ error: "title and link required" });
+  }
 
-🔗 Buy Now:
-https://link.amazon/B04TsPJqv
+  let off = "";
+  if (price && mrp && Number(mrp) > Number(price)) {
+    off = ` (${Math.round(((mrp - price) / mrp) * 100)}% OFF)`;
+  }
 
-📢 More deals: https://t.me/PriceNazarDeals`;
+  const caption =
+`🔥 ${title}
+
+💰 Price: ₹${price || "-"}${mrp ? `  MRP: ₹${mrp}` : ""}${off}
+
+🔗 Buy Now: ${link}
+
+📢 More deals: https://t.me/PriceNazarDeals
+
+As an Amazon Associate I earn from qualifying purchases.`;
+
+  const method = image ? "sendPhoto" : "sendMessage";
+  const payload = image
+    ? { chat_id: channel, photo: image, caption }
+    : { chat_id: channel, text: caption };
 
   try {
     const response = await fetch(
-      `https://api.telegram.org/bot${token}/sendMessage`,
+      `https://api.telegram.org/bot${token}/${method}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: channel,
-          text: message,
-        }),
+        body: JSON.stringify(payload),
       }
     );
-
     const data = await response.json();
     return res.status(data.ok ? 200 : 500).json(data);
   } catch (error) {
