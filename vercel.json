@@ -1,5 +1,12 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "crons": [
+    { "path": "/api/auto-post?slot=0", "schedule": "30 3 * * *" },
+    { "path": "/api/auto-post?slot=1", "schedule": "30 6 * * *" },
+    { "path": "/api/auto-post?slot=2", "schedule": "30 9 * * *" },
+    { "path": "/api/auto-post?slot=3", "schedule": "30 12 * * *" },
+    { "path": "/api/auto-post?slot=4", "schedule": "30 15 * * *" }
   ]
 }
