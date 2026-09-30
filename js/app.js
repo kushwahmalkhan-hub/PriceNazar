@@ -246,6 +246,7 @@ function createProductCard(product) {
     + '<button class="compare-btn ' + (isSelected ? "selected" : "") + '" data-compare-id="' + product.id + '" aria-pressed="' + (isSelected ? "true" : "false") + '">'
     + (isSelected ? "✓ Added to Compare" : "＋ Compare")
     + '</button>'
+    + '<button class="share-btn" data-share-name="' + product.name + '" data-share-amazon="' + (product.amazonLink || "") + '" data-share-flipkart="' + (product.flipkartLink || "") + '">📤 Share</button>'
     + '</div></article>';
 }
 
@@ -422,6 +423,18 @@ function toggleCompare(id) {
    ========================================= */
 
 document.addEventListener("DOMContentLoaded", function() {
+
+  // Share button click
+  document.addEventListener("click", function(event) {
+    var btn = event.target.closest(".share-btn");
+    if (!btn) return;
+    var name = btn.dataset.shareName;
+    var amazon = btn.dataset.shareAmazon;
+    var flipkart = btn.dataset.shareFlipkart;
+    if (window.openShareModal) {
+      window.openShareModal(name, amazon, flipkart);
+    }
+  });
 
   // Product grid click (compare button)
   var productGrid = document.getElementById("productGrid");
