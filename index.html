@@ -1,12 +1,17 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#2563eb">
-  <meta name="description" content="Explore and compare smartphones, laptops, TVs and electronics on PriceNazar.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#3b82f6">
+  <meta name="description" content="Electronics compare करें और best price पाएं Amazon & Flipkart पर।">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PriceNazar">
   <title>PriceNazar - Electronics Price Comparison</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -15,11 +20,7 @@
   <header class="site-header">
     <div class="container header-inner">
       <a href="#" class="logo">Price<span>Nazar</span></a>
-
-      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
-        ☰
-      </button>
-
+      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
       <nav class="main-nav" id="mainNav">
         <a href="#home">Home</a>
         <a href="#categories">Categories</a>
@@ -33,17 +34,11 @@
     <!-- Hero -->
     <section class="hero" id="home">
       <div class="container hero-content">
-        <span class="hero-badge">SMART ELECTRONICS SHOPPING</span>
-
-        <h1>Find the Right Product<br>
-          at the <span>Right Price</span>
-        </h1>
-
+        <span class="hero-badge">🔥 SMART ELECTRONICS SHOPPING</span>
+        <h1>Find the Right Product<br>at the <span>Right Price</span></h1>
         <p class="hero-description">
-          Explore electronics, compare products and find shopping links
-          for your favorite gadgets.
+          Electronics compare करें और Amazon & Flipkart पर best price पाएं।
         </p>
-
         <div class="search-wrapper">
           <div class="search-box">
             <span class="search-icon">🔍</span>
@@ -52,14 +47,12 @@
               id="productSearch"
               placeholder="Search phones, laptops, TVs..."
               aria-label="Search products"
+              autocomplete="off"
             >
             <button class="primary-btn" id="searchBtn">Search</button>
           </div>
         </div>
-
-        <p class="search-hint">
-          Browse products and compare their details in one place.
-        </p>
+        <p class="search-hint">Browse products and compare their details in one place.</p>
       </div>
     </section>
 
@@ -71,38 +64,32 @@
           <h2>Shop by <span>Category</span></h2>
           <p>Find the electronics you are looking for.</p>
         </div>
-
         <div class="features-grid" id="categoryGrid">
           <button class="feature-card category-card" data-category="Smartphones">
             <div class="feature-icon blue">📱</div>
             <h3>Smartphones</h3>
             <p>Explore mobile phones.</p>
           </button>
-
           <button class="feature-card category-card" data-category="Laptops">
             <div class="feature-icon purple">💻</div>
             <h3>Laptops</h3>
             <p>Find laptops for work and gaming.</p>
           </button>
-
           <button class="feature-card category-card" data-category="Smart TVs">
             <div class="feature-icon orange">📺</div>
             <h3>Smart TVs</h3>
             <p>Explore smart televisions.</p>
           </button>
-
           <button class="feature-card category-card" data-category="PC Parts">
             <div class="feature-icon green">🖥️</div>
             <h3>PC Parts</h3>
             <p>GPUs, CPUs, RAM and storage.</p>
           </button>
-
           <button class="feature-card category-card" data-category="Accessories">
             <div class="feature-icon pink">🎧</div>
             <h3>Accessories</h3>
             <p>Headphones, chargers and more.</p>
           </button>
-
           <button class="feature-card category-card" data-category="Tablets">
             <div class="feature-icon cyan">📟</div>
             <h3>Tablets & Wearables</h3>
@@ -120,7 +107,6 @@
           <h2>Explore <span>Products</span></h2>
           <p>Search and filter products, then compare your choices.</p>
         </div>
-
         <div class="product-filters">
           <select id="categoryFilter" aria-label="Filter by category">
             <option value="all">All Categories</option>
@@ -131,9 +117,7 @@
             <option value="Accessories">Accessories</option>
             <option value="Tablets">Tablets</option>
             <option value="Smartwatches">Smartwatches</option>
-            <option value="Other Electronics">Other Electronics</option>
           </select>
-
           <select id="sortFilter" aria-label="Sort products">
             <option value="default">Default Order</option>
             <option value="name-asc">Name: A to Z</option>
@@ -141,9 +125,7 @@
             <option value="price-desc">Price: High to Low</option>
           </select>
         </div>
-
         <p class="status-message" id="searchStatus" aria-live="polite"></p>
-
         <div class="product-grid" id="productGrid">
           <div class="tracker-empty">
             <div class="empty-icon">🛍️</div>
@@ -162,17 +144,13 @@
           <h2>Compare <span>Products</span></h2>
           <p>Select up to 3 products to compare their specifications.</p>
         </div>
-
         <div class="compare-card">
           <div id="compareList">
             <p class="compare-empty">
               Select products using the Compare button on a product card.
             </p>
           </div>
-
-          <button class="primary-btn" id="clearCompareBtn">
-            Clear Comparison
-          </button>
+          <button class="primary-btn" id="clearCompareBtn">Clear Comparison</button>
         </div>
       </div>
     </section>
@@ -185,7 +163,6 @@
         <a href="#" class="logo">Price<span>Nazar</span></a>
         <p>Explore electronics. Compare products. Shop smarter.</p>
       </div>
-
       <div class="footer-links">
         <a href="#home">Home</a>
         <a href="#categories">Categories</a>
@@ -193,12 +170,113 @@
         <a href="#compare">Compare</a>
       </div>
     </div>
-
     <div class="footer-bottom">
-      © <span id="currentYear"></span> PriceNazar. All rights reserved.
+      © <span id="currentYear"></span> PriceNazar. All rights reserved. |
+      Prices may vary. Check retailer for latest price.
     </div>
   </footer>
 
+  <!-- Bottom Navigation (Mobile App Feel) -->
+  <nav class="bottom-nav" id="bottomNav">
+    <a href="#home" class="bottom-nav-item active" data-section="home">
+      <span class="bottom-nav-icon">🏠</span>
+      <span class="bottom-nav-label">Home</span>
+    </a>
+    <a href="#categories" class="bottom-nav-item" data-section="categories">
+      <span class="bottom-nav-icon">📂</span>
+      <span class="bottom-nav-label">Categories</span>
+    </a>
+    <a href="#products" class="bottom-nav-item" data-section="products">
+      <span class="bottom-nav-icon">🛍️</span>
+      <span class="bottom-nav-label">Products</span>
+    </a>
+    <a href="#compare" class="bottom-nav-item" data-section="compare">
+      <span class="bottom-nav-icon">⚖️</span>
+      <span class="bottom-nav-label">Compare</span>
+    </a>
+  </nav>
+
+  <!-- PWA Install Banner -->
+  <div class="install-banner" id="installBanner">
+    <div class="install-banner-content">
+      <span class="install-icon">📲</span>
+      <div>
+        <strong>App Install करें</strong>
+        <p>PriceNazar को home screen पर add करें</p>
+      </div>
+    </div>
+    <div class="install-banner-actions">
+      <button class="install-btn" id="installBtn">Install</button>
+      <button class="install-close" id="installClose">✕</button>
+    </div>
+  </div>
+
   <script src="js/app.js"></script>
+  <script>
+    // =====================
+    // PWA Service Worker
+    // =====================
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(function() {});
+    }
+
+    // =====================
+    // PWA Install Banner
+    // =====================
+    var deferredPrompt;
+    var installBanner = document.getElementById("installBanner");
+    var installBtn = document.getElementById("installBtn");
+    var installClose = document.getElementById("installClose");
+
+    window.addEventListener("beforeinstallprompt", function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (!localStorage.getItem("pn_install_dismissed")) {
+        setTimeout(function() {
+          installBanner.classList.add("show");
+        }, 3000);
+      }
+    });
+
+    installBtn.addEventListener("click", function() {
+      installBanner.classList.remove("show");
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function() {
+          deferredPrompt = null;
+        });
+      }
+    });
+
+    installClose.addEventListener("click", function() {
+      installBanner.classList.remove("show");
+      localStorage.setItem("pn_install_dismissed", "true");
+    });
+
+    // =====================
+    // Bottom Nav Active State
+    // =====================
+    var sections = ["home", "categories", "products", "compare"];
+    var navItems = document.querySelectorAll(".bottom-nav-item");
+
+    function updateActiveNav() {
+      var scrollY = window.scrollY + window.innerHeight / 2;
+      var active = "home";
+
+      sections.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && el.offsetTop <= scrollY) {
+          active = id;
+        }
+      });
+
+      navItems.forEach(function(item) {
+        item.classList.toggle("active", item.dataset.section === active);
+      });
+    }
+
+    window.addEventListener("scroll", updateActiveNav, { passive: true });
+    updateActiveNav();
+  </script>
 </body>
 </html>
