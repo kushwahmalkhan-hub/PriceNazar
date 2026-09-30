@@ -3,15 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <!-- ===================== SEO ===================== -->
+  <title>PriceNazar - Electronics Price Comparison India | Amazon & Flipkart</title>
+  <meta name="description" content="PriceNazar पर electronics compare करें और Amazon व Flipkart पर best price पाएं। Smartphones, Laptops, TVs, PC Parts और Accessories।">
+  <meta name="keywords" content="price comparison india, best price smartphone, amazon flipkart compare, electronics price india, mobile phone price, laptop price comparison, PriceNazar">
+  <meta name="author" content="PriceNazar">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://price-nazar.vercel.app/">
+
+  <!-- ===================== Open Graph (WhatsApp/Facebook) ===================== -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://price-nazar.vercel.app/">
+  <meta property="og:title" content="PriceNazar - Best Electronics Price Comparison India">
+  <meta property="og:description" content="Smartphones, Laptops, TVs compare करें और Amazon व Flipkart पर best price पाएं।">
+  <meta property="og:image" content="https://price-nazar.vercel.app/icons/icon-512.png">
+  <meta property="og:site_name" content="PriceNazar">
+  <meta property="og:locale" content="hi_IN">
+
+  <!-- ===================== Twitter Card ===================== -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PriceNazar - Electronics Price Comparison India">
+  <meta name="twitter:description" content="Smartphones, Laptops, TVs compare करें और best price पाएं।">
+  <meta name="twitter:image" content="https://price-nazar.vercel.app/icons/icon-512.png">
+
+  <!-- ===================== PWA ===================== -->
   <meta name="theme-color" content="#3b82f6">
-  <meta name="description" content="Electronics compare करें और best price पाएं Amazon & Flipkart पर।">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PriceNazar">
-  <title>PriceNazar - Electronics Price Comparison</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <!-- ===================== Schema Markup ===================== -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "PriceNazar",
+    "url": "https://price-nazar.vercel.app/",
+    "description": "Electronics price comparison website for India - Compare prices on Amazon and Flipkart",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://price-nazar.vercel.app/#products?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -176,7 +216,7 @@
     </div>
   </footer>
 
-  <!-- Bottom Navigation (Mobile App Feel) -->
+  <!-- Bottom Navigation -->
   <nav class="bottom-nav" id="bottomNav">
     <a href="#home" class="bottom-nav-item active" data-section="home">
       <span class="bottom-nav-icon">🏠</span>
@@ -196,6 +236,32 @@
     </a>
   </nav>
 
+  <!-- Share Modal -->
+  <div class="share-modal-overlay" id="shareModal">
+    <div class="share-modal">
+      <div class="share-modal-header">
+        <h3>🔗 Share Product</h3>
+        <button class="share-modal-close" id="shareModalClose">✕</button>
+      </div>
+      <p class="share-product-name" id="shareProductName"></p>
+      <div class="share-options">
+        <button class="share-option whatsapp" id="shareWhatsapp">
+          <span>💬</span>
+          <span>WhatsApp</span>
+        </button>
+        <button class="share-option twitter" id="shareTwitter">
+          <span>🐦</span>
+          <span>Twitter/X</span>
+        </button>
+        <button class="share-option copylink" id="shareCopyLink">
+          <span>🔗</span>
+          <span>Link Copy</span>
+        </button>
+      </div>
+      <p class="share-copied" id="shareCopied">✅ Link copy हो गई!</p>
+    </div>
+  </div>
+
   <!-- PWA Install Banner -->
   <div class="install-banner" id="installBanner">
     <div class="install-banner-content">
@@ -213,70 +279,94 @@
 
   <script src="js/app.js"></script>
   <script>
-    // =====================
     // PWA Service Worker
-    // =====================
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(function() {});
     }
 
-    // =====================
-    // PWA Install Banner
-    // =====================
+    // PWA Install
     var deferredPrompt;
     var installBanner = document.getElementById("installBanner");
-    var installBtn = document.getElementById("installBtn");
-    var installClose = document.getElementById("installClose");
 
     window.addEventListener("beforeinstallprompt", function(e) {
       e.preventDefault();
       deferredPrompt = e;
       if (!localStorage.getItem("pn_install_dismissed")) {
-        setTimeout(function() {
-          installBanner.classList.add("show");
-        }, 3000);
+        setTimeout(function() { installBanner.classList.add("show"); }, 3000);
       }
     });
 
-    installBtn.addEventListener("click", function() {
+    document.getElementById("installBtn").addEventListener("click", function() {
       installBanner.classList.remove("show");
       if (deferredPrompt) {
         deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(function() {
-          deferredPrompt = null;
-        });
+        deferredPrompt = null;
       }
     });
 
-    installClose.addEventListener("click", function() {
+    document.getElementById("installClose").addEventListener("click", function() {
       installBanner.classList.remove("show");
       localStorage.setItem("pn_install_dismissed", "true");
     });
 
-    // =====================
-    // Bottom Nav Active State
-    // =====================
+    // Bottom Nav Active
     var sections = ["home", "categories", "products", "compare"];
     var navItems = document.querySelectorAll(".bottom-nav-item");
 
-    function updateActiveNav() {
+    window.addEventListener("scroll", function() {
       var scrollY = window.scrollY + window.innerHeight / 2;
       var active = "home";
-
       sections.forEach(function(id) {
         var el = document.getElementById(id);
-        if (el && el.offsetTop <= scrollY) {
-          active = id;
-        }
+        if (el && el.offsetTop <= scrollY) active = id;
       });
-
       navItems.forEach(function(item) {
         item.classList.toggle("active", item.dataset.section === active);
       });
-    }
+    }, { passive: true });
 
-    window.addEventListener("scroll", updateActiveNav, { passive: true });
-    updateActiveNav();
+    // Share Modal
+    var shareModal = document.getElementById("shareModal");
+    var currentShareProduct = null;
+
+    window.openShareModal = function(productName, amazonLink, flipkartLink) {
+      currentShareProduct = { name: productName, amazonLink: amazonLink, flipkartLink: flipkartLink };
+      document.getElementById("shareProductName").textContent = productName;
+      document.getElementById("shareCopied").style.display = "none";
+      shareModal.classList.add("show");
+    };
+
+    document.getElementById("shareModalClose").addEventListener("click", function() {
+      shareModal.classList.remove("show");
+    });
+
+    shareModal.addEventListener("click", function(e) {
+      if (e.target === shareModal) shareModal.classList.remove("show");
+    });
+
+    document.getElementById("shareWhatsapp").addEventListener("click", function() {
+      if (!currentShareProduct) return;
+      var link = currentShareProduct.amazonLink || currentShareProduct.flipkartLink || "https://price-nazar.vercel.app";
+      var text = "🛍️ " + currentShareProduct.name + " देखें PriceNazar पर!\n" + link + "\n\nAmazon & Flipkart पर best price compare करें 👉 https://price-nazar.vercel.app";
+      window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+    });
+
+    document.getElementById("shareTwitter").addEventListener("click", function() {
+      if (!currentShareProduct) return;
+      var text = "🛍️ " + currentShareProduct.name + " - Best price on PriceNazar!\nhttps://price-nazar.vercel.app #PriceNazar #ElectronicsIndia";
+      window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(text), "_blank");
+    });
+
+    document.getElementById("shareCopyLink").addEventListener("click", function() {
+      if (!currentShareProduct) return;
+      var link = currentShareProduct.amazonLink || currentShareProduct.flipkartLink || "https://price-nazar.vercel.app";
+      navigator.clipboard.writeText(link).then(function() {
+        document.getElementById("shareCopied").style.display = "block";
+        setTimeout(function() {
+          document.getElementById("shareCopied").style.display = "none";
+        }, 2000);
+      });
+    });
   </script>
 </body>
 </html>
