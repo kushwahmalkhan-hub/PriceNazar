@@ -309,12 +309,31 @@ function renderProducts() {
   var filtered = getFilteredProducts();
 
   if (!filtered.length) {
-    productGrid.innerHTML = '<div class="tracker-empty">'
-      + '<div class="empty-icon">🔎</div>'
-      + '<h3>No products found</h3>'
-      + '<p>Try a different search term or category.</p>'
-      + '<button class="primary-btn" id="resetSearchBtn">Show All Products</button>'
-      + '</div>';
+    var productSearchEl = document.getElementById("productSearch");
+    var searchQuery = productSearchEl ? productSearchEl.value.trim() : "";
+
+    if (searchQuery) {
+      var amazonUrl = "https://www.amazon.in/s?k=" + encodeURIComponent(searchQuery) + "&tag=pricenazar02-21";
+      var flipkartUrl = "https://www.flipkart.com/search?q=" + encodeURIComponent(searchQuery);
+
+      productGrid.innerHTML = '<div class="tracker-empty">'
+        + '<div class="empty-icon">🔍</div>'
+        + '<h3>' + searchQuery + ' - हमारी site पर नहीं मिला</h3>'
+        + '<p style="margin-bottom:20px;color:#64748b;">इसे Amazon या Flipkart पर खोजें:</p>'
+        + '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">'
+        + '<a href="' + amazonUrl + '" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#FF9900;color:#000;padding:13px 24px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;">🛒 Amazon पर खोजें</a>'
+        + '<a href="' + flipkartUrl + '" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#2874F0;color:#fff;padding:13px 24px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;">🛍️ Flipkart पर खोजें</a>'
+        + '</div>'
+        + '<p style="margin-top:18px;font-size:13px;color:#64748b;">या <button id="resetSearchBtn" style="background:none;border:none;color:#2563eb;cursor:pointer;font-weight:700;font-size:13px;text-decoration:underline;">सभी products देखें</button></p>'
+        + '</div>';
+    } else {
+      productGrid.innerHTML = '<div class="tracker-empty">'
+        + '<div class="empty-icon">🔎</div>'
+        + '<h3>No products found</h3>'
+        + '<p>Try a different search term or category.</p>'
+        + '<button class="primary-btn" id="resetSearchBtn">Show All Products</button>'
+        + '</div>';
+    }
 
     var resetBtn = document.getElementById("resetSearchBtn");
     if (resetBtn) {
