@@ -1,6 +1,6 @@
 // PriceNazar admin API (Vercel serverless function)
 // Needs these Environment Variables in Vercel:
-//   SUPABASE_URL, SUPABASE_SERVICE_KEY, ADMIN_PASSWORD
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY), ADMIN_PASSWORD
 import crypto from "crypto";
 
 const MAX_BULK = 1000;
@@ -75,7 +75,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { SUPABASE_URL, SUPABASE_SERVICE_KEY, ADMIN_PASSWORD } = process.env;
+  const { SUPABASE_URL, ADMIN_PASSWORD } = process.env;
+  const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !ADMIN_PASSWORD) {
     return res.status(500).json({ error: "Vercel Environment Variables missing" });
   }
