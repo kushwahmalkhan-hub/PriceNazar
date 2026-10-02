@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>PriceNazar Admin</title>
   <style>
     :root {
@@ -16,480 +17,208 @@
       --text: #0f172a;
       --muted: #64748b;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    body {
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* Login */
-    .login-screen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #1e3a8a, #2563eb);
-    }
-
-    .login-box {
-      background: white;
-      padding: 40px;
-      border-radius: 20px;
-      width: min(380px, calc(100% - 40px));
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-    }
-
-    .login-box h1 {
-      font-size: 26px;
-      margin-bottom: 6px;
-      color: var(--text);
-    }
-
+    .login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1e3a8a, #2563eb); }
+    .login-box { background: white; padding: 40px; border-radius: 20px; width: min(380px, calc(100% - 40px)); box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .login-box h1 { font-size: 26px; margin-bottom: 6px; }
     .login-box h1 span { color: var(--primary); }
+    .login-box p { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
 
-    .login-box p {
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 28px;
-    }
-
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 6px;
-      color: var(--text);
-    }
-
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
     .form-group input, .form-group select, .form-group textarea {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 14px;
-      font-family: inherit;
-      color: var(--text);
-      background: white;
-      outline: none;
-      transition: border-color 0.2s;
+      width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+      font-size: 14px; font-family: inherit; color: var(--text); background: white; outline: none;
     }
+    .form-group input:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
-    }
-
-    .form-group textarea {
-      resize: vertical;
-      min-height: 80px;
-    }
-
-    .btn {
-      padding: 12px 20px;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all 0.2s;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-      width: 100%;
-    }
-
+    .btn { padding: 12px 20px; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-block; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: white; }
     .btn-primary:hover { background: var(--primary-dark); }
+    .btn-full { width: 100%; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; padding: 8px 14px; font-size: 13px; }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+    .error-msg { color: var(--danger); font-size: 13px; margin-top: 10px; text-align: center; }
 
-    .btn-success {
-      background: var(--success);
-      color: white;
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: white;
-      padding: 8px 14px;
-      font-size: 13px;
-    }
-
-    .btn-secondary {
-      background: var(--bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    .error-msg {
-      color: var(--danger);
-      font-size: 13px;
-      margin-top: 10px;
-      text-align: center;
-    }
-
-    /* Admin Layout */
     .admin-screen { display: none; }
-
-    .admin-header {
-      background: white;
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 64px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .admin-header h1 {
-      font-size: 20px;
-    }
-
+    .admin-header { background: white; border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; position: sticky; top: 0; z-index: 10; }
+    .admin-header h1 { font-size: 20px; }
     .admin-header h1 span { color: var(--primary); }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .admin-body { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
 
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: white; border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .stat-card .num { font-size: 30px; font-weight: 800; color: var(--primary); }
+    .stat-card .label { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
-    .admin-body {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 28px 20px;
-    }
+    .section-card { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+    .section-card h2 { font-size: 18px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 
-    /* Stats */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 28px;
-    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .form-actions { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
 
-    .stat-card {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 20px;
-    }
+    .table-tools { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .table-tools input { flex: 1; min-width: 180px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; }
+    .products-table { width: 100%; border-collapse: collapse; }
+    .products-table th { text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 700; color: var(--muted); background: var(--bg); border-bottom: 1px solid var(--border); }
+    .products-table td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .products-table tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #dbeafe; color: var(--primary); }
+    .price-tag { font-weight: 700; color: var(--success); }
+    .no-price { color: var(--muted); font-size: 12px; }
+    .link-cell a { color: var(--primary); font-size: 12px; text-decoration: underline; }
+    .td-actions { display: flex; gap: 8px; }
+    .btn-edit { padding: 6px 12px; border: 1px solid var(--primary); border-radius: 7px; background: white; color: var(--primary); font-size: 12px; font-weight: 700; cursor: pointer; }
+    .pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+    .hint { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 14px; }
+    .progress { margin-top: 12px; font-size: 14px; font-weight: 700; color: var(--primary); }
 
-    .stat-card .num {
-      font-size: 32px;
-      font-weight: 800;
-      color: var(--primary);
-    }
-
-    .stat-card .label {
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    /* Section */
-    .section-card {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 24px;
-    }
-
-    .section-card h2 {
-      font-size: 18px;
-      margin-bottom: 20px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    /* Add Product Form */
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    .form-grid .full {
-      grid-column: 1 / -1;
-    }
-
-    .form-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 6px;
-    }
-
-    /* Products Table */
-    .products-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .products-table th {
-      text-align: left;
-      padding: 10px 14px;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--muted);
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .products-table td {
-      padding: 12px 14px;
-      font-size: 14px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-
-    .products-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    .products-table tr:hover td {
-      background: #f8fafc;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      background: #dbeafe;
-      color: var(--primary);
-    }
-
-    .price-tag {
-      font-weight: 700;
-      color: var(--success);
-    }
-
-    .no-price {
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .link-cell a {
-      color: var(--primary);
-      font-size: 12px;
-      text-decoration: underline;
-      word-break: break-all;
-    }
-
-    .td-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn-edit {
-      padding: 6px 12px;
-      border: 1px solid var(--primary);
-      border-radius: 7px;
-      background: white;
-      color: var(--primary);
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: var(--success);
-      color: white;
-      padding: 14px 20px;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 14px;
-      display: none;
-      z-index: 999;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    }
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 20px;
-    }
-
-    .modal {
-      background: white;
-      border-radius: 16px;
-      padding: 28px;
-      width: min(520px, 100%);
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-
-    .modal h2 {
-      font-size: 18px;
-      margin-bottom: 20px;
-    }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--success); color: white; padding: 14px 20px; border-radius: 12px; font-weight: 700; font-size: 14px; display: none; z-index: 999; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+    .modal { background: white; border-radius: 16px; padding: 28px; width: min(520px, 100%); max-height: 90vh; overflow-y: auto; }
+    .modal h2 { font-size: 18px; margin-bottom: 20px; }
 
     @media (max-width: 600px) {
-      .stats { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr 1fr; }
       .form-grid { grid-template-columns: 1fr; }
       .form-grid .full { grid-column: 1; }
       .products-table { font-size: 12px; }
       .admin-header h1 { font-size: 16px; }
+      .admin-header { padding: 0 14px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Login Screen -->
+  <!-- Login -->
   <div class="login-screen" id="loginScreen">
     <div class="login-box">
       <h1>Price<span>Nazar</span></h1>
       <p>Admin Panel — Login करें</p>
-
       <div class="form-group">
         <label>Password</label>
         <input type="password" id="passwordInput" placeholder="Admin password डालें">
       </div>
-
-      <button class="btn btn-primary" onclick="doLogin()">Login करें</button>
+      <button class="btn btn-primary btn-full" id="loginBtn">Login करें</button>
       <p class="error-msg" id="loginError"></p>
     </div>
   </div>
 
-  <!-- Admin Screen -->
+  <!-- Admin -->
   <div class="admin-screen" id="adminScreen">
-
     <header class="admin-header">
       <h1>Price<span>Nazar</span> Admin</h1>
       <div class="header-actions">
         <a href="/" target="_blank" class="btn btn-secondary">🌐 Site देखें</a>
-        <button class="btn btn-secondary" onclick="doLogout()">Logout</button>
+        <button class="btn btn-secondary" id="logoutBtn">Logout</button>
       </div>
     </header>
 
     <div class="admin-body">
 
-      <!-- Stats -->
       <div class="stats">
-        <div class="stat-card">
-          <div class="num" id="statTotal">0</div>
-          <div class="label">कुल Products</div>
-        </div>
-        <div class="stat-card">
-          <div class="num" id="statWithPrice">0</div>
-          <div class="label">Price वाले</div>
-        </div>
-        <div class="stat-card">
-          <div class="num" id="statWithLink">0</div>
-          <div class="label">Affiliate Link वाले</div>
-        </div>
+        <div class="stat-card"><div class="num" id="statTotal">0</div><div class="label">कुल Products</div></div>
+        <div class="stat-card"><div class="num" id="statWithPrice">0</div><div class="label">Price वाले</div></div>
+        <div class="stat-card"><div class="num" id="statFlipkart">0</div><div class="label">Flipkart Link वाले</div></div>
+        <div class="stat-card"><div class="num" id="statAmazon">0</div><div class="label">Amazon Link वाले</div></div>
       </div>
 
       <!-- Add Product -->
       <div class="section-card">
         <h2>➕ नया Product Add करें</h2>
-
         <div class="form-grid">
           <div class="form-group">
             <label>Product Name *</label>
             <input type="text" id="newName" placeholder="जैसे: Samsung Galaxy S24">
           </div>
-
           <div class="form-group">
             <label>Category *</label>
-            <select id="newCategory">
-              <option value="Smartphones">Smartphones</option>
-              <option value="Laptops">Laptops</option>
-              <option value="Smart TVs">Smart TVs</option>
-              <option value="PC Parts">PC Parts</option>
-              <option value="Accessories">Accessories</option>
-              <option value="Tablets">Tablets</option>
-              <option value="Smartwatches">Smartwatches</option>
-            </select>
+            <select id="newCategory"></select>
           </div>
-
           <div class="form-group">
             <label>Price (₹)</label>
             <input type="number" id="newPrice" placeholder="जैसे: 74999">
           </div>
-
           <div class="form-group">
             <label>Emoji Icon</label>
-            <input type="text" id="newImage" placeholder="📱" value="📱">
+            <input type="text" id="newImage" value="📱">
           </div>
-
           <div class="form-group full">
             <label>Description</label>
             <input type="text" id="newDescription" placeholder="जैसे: Samsung का flagship smartphone">
           </div>
-
           <div class="form-group full">
             <label>Amazon Affiliate Link</label>
             <input type="url" id="newAmazonLink" placeholder="https://amzn.to/...">
           </div>
-
           <div class="form-group full">
-            <label>Flipkart Link (optional)</label>
-            <input type="url" id="newFlipkartLink" placeholder="https://fkrt.it/...">
+            <label>Flipkart Link</label>
+            <input type="url" id="newFlipkartLink" placeholder="https://dl.flipkart.com/...">
           </div>
-
           <div class="form-group full">
             <label>Search Terms (optional)</label>
             <input type="text" id="newSearchTerms" placeholder="samsung galaxy s24 samsung phone mobile">
           </div>
         </div>
-
         <div class="form-actions">
-          <button class="btn btn-success" onclick="addProduct()">✅ Product Add करें</button>
-          <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
+          <button class="btn btn-success" id="addBtn">✅ Product Add करें</button>
+          <button class="btn btn-secondary" id="clearBtn">Clear</button>
         </div>
+      </div>
+
+      <!-- Bulk Import -->
+      <div class="section-card">
+        <h2>📥 बहुत सारे Products एक साथ (Bulk Import)</h2>
+        <p class="hint">
+          CSV या JSON फ़ाइल चुनें। पुरानी Backup JSON फ़ाइल भी यहीं Restore होती है।<br>
+          • <strong>CSV</strong> में पहली लाइन header होनी चाहिए: name, category, description, price, image, amazonLink, flipkartLink, searchTerms (सिर्फ़ name ज़रूरी है)।<br>
+          • <strong>id के बिना</strong> फ़ाइल हर बार नए products जोड़ती है, इसलिए एक ही फ़ाइल दो बार import न करें।<br>
+          • <strong>id वाली</strong> फ़ाइल (Backup) उसी id के पुराने product को बदल देती है।
+        </p>
+        <div class="form-actions">
+          <label class="btn btn-secondary" style="cursor:pointer;">
+            📂 फ़ाइल चुनें
+            <input type="file" id="importFile" accept=".csv,.json,application/json,text/csv" style="display:none;">
+          </label>
+          <button class="btn btn-secondary" id="templateBtn">CSV Template Download</button>
+          <button class="btn btn-success" id="importBtn" disabled>Import शुरू करें</button>
+        </div>
+        <p class="progress" id="importStatus"></p>
       </div>
 
       <!-- Products List -->
       <div class="section-card">
         <h2>📦 सभी Products</h2>
+        <div class="table-tools">
+          <input type="search" id="listSearch" placeholder="Products में खोजें...">
+        </div>
         <div style="overflow-x:auto;">
-          <table class="products-table" id="productsTable">
+          <table class="products-table">
             <thead>
-              <tr>
-                <th>Product</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Amazon Link</th>
-                <th>Actions</th>
-              </tr>
+              <tr><th>Product</th><th>Category</th><th>Price</th><th>Links</th><th>Actions</th></tr>
             </thead>
             <tbody id="productsTableBody"></tbody>
           </table>
         </div>
+        <div class="pager">
+          <button class="btn btn-secondary" id="prevBtn">← पिछला</button>
+          <span id="pageInfo"></span>
+          <button class="btn btn-secondary" id="nextBtn">अगला →</button>
+        </div>
       </div>
 
-      <!-- Export -->
+      <!-- Backup -->
       <div class="section-card">
         <h2>📤 Export / Backup</h2>
-        <p style="color:var(--muted);font-size:14px;margin-bottom:16px;">Products का backup लें या restore करें।</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="exportData()">⬇️ Backup Download करें</button>
-          <label class="btn btn-secondary" style="cursor:pointer;">
-            ⬆️ Backup Restore करें
-            <input type="file" accept=".json" onchange="importData(event)" style="display:none;">
-          </label>
-        </div>
+        <p class="hint">सभी products की JSON backup फ़ाइल डाउनलोड करें। Restore के लिए ऊपर वाला Bulk Import इस्तेमाल करें।</p>
+        <button class="btn btn-primary" id="exportBtn">⬇️ Backup Download करें</button>
+        <p class="progress" id="exportStatus"></p>
       </div>
 
     </div>
@@ -499,62 +228,20 @@
   <div class="modal-overlay" id="editModal">
     <div class="modal">
       <h2>✏️ Product Edit करें</h2>
-
       <input type="hidden" id="editId">
-
       <div class="form-grid">
-        <div class="form-group">
-          <label>Product Name *</label>
-          <input type="text" id="editName">
-        </div>
-
-        <div class="form-group">
-          <label>Category *</label>
-          <select id="editCategory">
-            <option value="Smartphones">Smartphones</option>
-            <option value="Laptops">Laptops</option>
-            <option value="Smart TVs">Smart TVs</option>
-            <option value="PC Parts">PC Parts</option>
-            <option value="Accessories">Accessories</option>
-            <option value="Tablets">Tablets</option>
-            <option value="Smartwatches">Smartwatches</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Price (₹)</label>
-          <input type="number" id="editPrice">
-        </div>
-
-        <div class="form-group">
-          <label>Emoji Icon</label>
-          <input type="text" id="editImage">
-        </div>
-
-        <div class="form-group full">
-          <label>Description</label>
-          <input type="text" id="editDescription">
-        </div>
-
-        <div class="form-group full">
-          <label>Amazon Affiliate Link</label>
-          <input type="url" id="editAmazonLink">
-        </div>
-
-        <div class="form-group full">
-          <label>Flipkart Link</label>
-          <input type="url" id="editFlipkartLink">
-        </div>
-
-        <div class="form-group full">
-          <label>Search Terms</label>
-          <input type="text" id="editSearchTerms">
-        </div>
+        <div class="form-group"><label>Product Name *</label><input type="text" id="editName"></div>
+        <div class="form-group"><label>Category *</label><select id="editCategory"></select></div>
+        <div class="form-group"><label>Price (₹)</label><input type="number" id="editPrice"></div>
+        <div class="form-group"><label>Emoji Icon</label><input type="text" id="editImage"></div>
+        <div class="form-group full"><label>Description</label><input type="text" id="editDescription"></div>
+        <div class="form-group full"><label>Amazon Affiliate Link</label><input type="url" id="editAmazonLink"></div>
+        <div class="form-group full"><label>Flipkart Link</label><input type="url" id="editFlipkartLink"></div>
+        <div class="form-group full"><label>Search Terms</label><input type="text" id="editSearchTerms"></div>
       </div>
-
       <div class="form-actions">
-        <button class="btn btn-success" onclick="saveEdit()">✅ Save करें</button>
-        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-success" id="saveEditBtn">✅ Save करें</button>
+        <button class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
       </div>
     </div>
   </div>
@@ -562,286 +249,388 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    // =====================
-    // Password
-    // =====================
-    var ADMIN_PASSWORD = "pricenazar123"; // यहाँ अपना password बदलें
+    var API = "/api/products";
+    var PAGE = 50;
+    var CATEGORIES = ["Smartphones", "Laptops", "Smart TVs", "PC Parts", "Accessories", "Tablets", "Smartwatches", "Other"];
+    var currentRows = [];
+    var page = 0;
+    var totalRows = 0;
+    var listQuery = "";
+    var listTimer = null;
+    var importItems = [];
 
-    function doLogin() {
-      var pass = document.getElementById("passwordInput").value;
-      if (pass === ADMIN_PASSWORD) {
-        localStorage.setItem("pn_admin_auth", "true");
-        showAdmin();
-      } else {
-        document.getElementById("loginError").textContent = "गलत password! फिर कोशिश करें।";
-      }
+    function $(id) { return document.getElementById(id); }
+
+    function escapeHTML(v) {
+      return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
     }
 
-    document.getElementById("passwordInput").addEventListener("keydown", function(e) {
-      if (e.key === "Enter") doLogin();
-    });
+    function safeUrl(u) {
+      u = String(u || "").trim();
+      return /^https?:\/\//i.test(u) ? u : "";
+    }
+
+    // ---------- API ----------
+    function api(action, payload) {
+      var body = Object.assign({ action: action }, payload || {});
+      return fetch(API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": sessionStorage.getItem("pn_admin_pw") || ""
+        },
+        body: JSON.stringify(body)
+      }).then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          if (!res.ok) throw new Error(data.error || ("Error " + res.status));
+          return data;
+        });
+      });
+    }
+
+    // ---------- Login ----------
+    function fillCategories(select) {
+      select.innerHTML = CATEGORIES.map(function (c) {
+        return '<option value="' + escapeHTML(c) + '">' + escapeHTML(c) + '</option>';
+      }).join("");
+    }
+
+    function doLogin() {
+      var pass = $("passwordInput").value;
+      if (!pass) return;
+      sessionStorage.setItem("pn_admin_pw", pass);
+      $("loginError").textContent = "";
+      api("login").then(showAdmin).catch(function (err) {
+        sessionStorage.removeItem("pn_admin_pw");
+        $("loginError").textContent = err.message === "Wrong password" ? "गलत password! फिर कोशिश करें।" : err.message;
+      });
+    }
 
     function doLogout() {
-      localStorage.removeItem("pn_admin_auth");
-      document.getElementById("adminScreen").style.display = "none";
-      document.getElementById("loginScreen").style.display = "flex";
+      sessionStorage.removeItem("pn_admin_pw");
+      $("adminScreen").style.display = "none";
+      $("loginScreen").style.display = "flex";
+      $("passwordInput").value = "";
     }
 
     function showAdmin() {
-      document.getElementById("loginScreen").style.display = "none";
-      document.getElementById("adminScreen").style.display = "block";
-      renderTable();
-      updateStats();
+      $("loginScreen").style.display = "none";
+      $("adminScreen").style.display = "block";
+      loadList();
+      loadStats();
     }
 
-    // Check if already logged in
-    if (localStorage.getItem("pn_admin_auth") === "true") {
-      showAdmin();
+    // ---------- Stats ----------
+    function loadStats() {
+      api("stats").then(function (s) {
+        $("statTotal").textContent = s.total.toLocaleString("en-IN");
+        $("statWithPrice").textContent = s.withPrice.toLocaleString("en-IN");
+        $("statFlipkart").textContent = s.withFlipkart.toLocaleString("en-IN");
+        $("statAmazon").textContent = s.withAmazon.toLocaleString("en-IN");
+      }).catch(function () {});
     }
 
-    // =====================
-    // Default Products
-    // =====================
-    var defaultProducts = [
-      { id: 1, name: "Samsung Galaxy S Series", category: "Smartphones", description: "Samsung flagship smartphone", price: null, image: "📱", amazonLink: "", flipkartLink: "", searchTerms: "samsung galaxy s series samsung phone mobile" },
-      { id: 2, name: "Apple iPhone", category: "Smartphones", description: "Apple smartphone", price: null, image: "📱", amazonLink: "", flipkartLink: "", searchTerms: "apple iphone ios mobile phone" },
-      { id: 3, name: "OnePlus Smartphone", category: "Smartphones", description: "OnePlus Android smartphone", price: null, image: "📱", amazonLink: "", flipkartLink: "", searchTerms: "oneplus android smartphone mobile" },
-      { id: 4, name: "Gaming Laptop", category: "Laptops", description: "Laptop for gaming and performance", price: null, image: "💻", amazonLink: "", flipkartLink: "", searchTerms: "gaming laptop notebook" },
-      { id: 5, name: "Thin and Light Laptop", category: "Laptops", description: "Portable laptop for everyday use", price: null, image: "💻", amazonLink: "", flipkartLink: "", searchTerms: "thin light laptop portable" },
-      { id: 6, name: "Smart LED TV", category: "Smart TVs", description: "Smart television", price: null, image: "📺", amazonLink: "", flipkartLink: "", searchTerms: "smart tv television led" },
-      { id: 7, name: "Gaming Graphics Card", category: "PC Parts", description: "Graphics card for gaming PCs", price: null, image: "🎮", amazonLink: "", flipkartLink: "", searchTerms: "graphics card gpu nvidia amd" },
-      { id: 8, name: "Desktop Processor", category: "PC Parts", description: "CPU for desktop computers", price: null, image: "🖥️", amazonLink: "", flipkartLink: "", searchTerms: "processor cpu intel amd" },
-      { id: 9, name: "DDR5 RAM", category: "PC Parts", description: "Desktop memory", price: null, image: "💾", amazonLink: "", flipkartLink: "", searchTerms: "ddr5 ram memory" },
-      { id: 10, name: "Wireless Headphones", category: "Accessories", description: "Wireless audio headphones", price: null, image: "🎧", amazonLink: "", flipkartLink: "", searchTerms: "wireless headphones audio" },
-      { id: 11, name: "Bluetooth Earbuds", category: "Accessories", description: "True wireless earbuds", price: null, image: "🎵", amazonLink: "", flipkartLink: "", searchTerms: "bluetooth earbuds tws" },
-      { id: 12, name: "Android Tablet", category: "Tablets", description: "Tablet for study and entertainment", price: null, image: "📟", amazonLink: "", flipkartLink: "", searchTerms: "android tablet tab" },
-      { id: 13, name: "Smartwatch", category: "Smartwatches", description: "Smart wearable watch", price: null, image: "⌚", amazonLink: "", flipkartLink: "", searchTerms: "smartwatch wearable" },
-      { id: 14, name: "Portable SSD", category: "PC Parts", description: "External solid state drive", price: null, image: "💽", amazonLink: "", flipkartLink: "", searchTerms: "portable ssd external storage" },
-      { id: 15, name: "Wireless Keyboard", category: "Accessories", description: "Wireless computer keyboard", price: null, image: "⌨️", amazonLink: "", flipkartLink: "", searchTerms: "wireless keyboard" },
-      { id: 16, name: "Gaming Mouse", category: "Accessories", description: "Mouse for gaming", price: null, image: "🖱️", amazonLink: "", flipkartLink: "", searchTerms: "gaming mouse" }
-    ];
-
-    // =====================
-    // Data Functions
-    // =====================
-    function getProducts() {
-      var stored = localStorage.getItem("pn_products");
-      if (stored) return JSON.parse(stored);
-      localStorage.setItem("pn_products", JSON.stringify(defaultProducts));
-      return defaultProducts;
-    }
-
-    function saveProducts(products) {
-      localStorage.setItem("pn_products", JSON.stringify(products));
-    }
-
-    function getNextId() {
-      var products = getProducts();
-      if (!products.length) return 1;
-      return Math.max.apply(null, products.map(function(p) { return p.id; })) + 1;
-    }
-
-    // =====================
-    // Add Product
-    // =====================
-    function addProduct() {
-      var name = document.getElementById("newName").value.trim();
-      var category = document.getElementById("newCategory").value;
-      var price = document.getElementById("newPrice").value;
-      var image = document.getElementById("newImage").value.trim() || "📱";
-      var description = document.getElementById("newDescription").value.trim();
-      var amazonLink = document.getElementById("newAmazonLink").value.trim();
-      var flipkartLink = document.getElementById("newFlipkartLink").value.trim();
-      var searchTerms = document.getElementById("newSearchTerms").value.trim();
-
-      if (!name) {
-        showToast("Product Name ज़रूरी है!", true);
-        return;
-      }
-
-      var products = getProducts();
-      products.push({
-        id: getNextId(),
-        name: name,
-        category: category,
-        description: description || category + " product",
-        price: price ? Number(price) : null,
-        image: image,
-        amazonLink: amazonLink,
-        flipkartLink: flipkartLink,
-        searchTerms: searchTerms || name.toLowerCase()
+    // ---------- List ----------
+    function loadList() {
+      api("list", { q: listQuery, limit: PAGE, offset: page * PAGE }).then(function (data) {
+        currentRows = data.rows;
+        totalRows = data.total;
+        renderTable();
+      }).catch(function (err) {
+        if (err.message === "Wrong password") { doLogout(); return; }
+        showToast(err.message, true);
       });
-
-      saveProducts(products);
-      clearForm();
-      renderTable();
-      updateStats();
-      showToast("Product add हो गया! ✅");
     }
 
-    function clearForm() {
-      document.getElementById("newName").value = "";
-      document.getElementById("newPrice").value = "";
-      document.getElementById("newImage").value = "📱";
-      document.getElementById("newDescription").value = "";
-      document.getElementById("newAmazonLink").value = "";
-      document.getElementById("newFlipkartLink").value = "";
-      document.getElementById("newSearchTerms").value = "";
-    }
-
-    // =====================
-    // Delete Product
-    // =====================
-    function deleteProduct(id) {
-      if (!confirm("यह product delete करना चाहते हैं?")) return;
-      var products = getProducts().filter(function(p) { return p.id !== id; });
-      saveProducts(products);
-      renderTable();
-      updateStats();
-      showToast("Product delete हो गया!");
-    }
-
-    // =====================
-    // Edit Product
-    // =====================
-    function openEdit(id) {
-      var product = getProducts().find(function(p) { return p.id === id; });
-      if (!product) return;
-
-      document.getElementById("editId").value = id;
-      document.getElementById("editName").value = product.name;
-      document.getElementById("editCategory").value = product.category;
-      document.getElementById("editPrice").value = product.price || "";
-      document.getElementById("editImage").value = product.image;
-      document.getElementById("editDescription").value = product.description;
-      document.getElementById("editAmazonLink").value = product.amazonLink || "";
-      document.getElementById("editFlipkartLink").value = product.flipkartLink || "";
-      document.getElementById("editSearchTerms").value = product.searchTerms || "";
-
-      document.getElementById("editModal").style.display = "flex";
-    }
-
-    function saveEdit() {
-      var id = Number(document.getElementById("editId").value);
-      var products = getProducts();
-      var index = products.findIndex(function(p) { return p.id === id; });
-      if (index === -1) return;
-
-      var price = document.getElementById("editPrice").value;
-
-      products[index] = {
-        id: id,
-        name: document.getElementById("editName").value.trim(),
-        category: document.getElementById("editCategory").value,
-        description: document.getElementById("editDescription").value.trim(),
-        price: price ? Number(price) : null,
-        image: document.getElementById("editImage").value.trim() || "📱",
-        amazonLink: document.getElementById("editAmazonLink").value.trim(),
-        flipkartLink: document.getElementById("editFlipkartLink").value.trim(),
-        searchTerms: document.getElementById("editSearchTerms").value.trim()
-      };
-
-      saveProducts(products);
-      closeModal();
-      renderTable();
-      updateStats();
-      showToast("Product update हो गया! ✅");
-    }
-
-    function closeModal() {
-      document.getElementById("editModal").style.display = "none";
-    }
-
-    document.getElementById("editModal").addEventListener("click", function(e) {
-      if (e.target === this) closeModal();
-    });
-
-    // =====================
-    // Render Table
-    // =====================
     function renderTable() {
-      var products = getProducts();
-      var tbody = document.getElementById("productsTableBody");
+      var tbody = $("productsTableBody");
+      var pages = Math.max(1, Math.ceil(totalRows / PAGE));
+      $("pageInfo").textContent = "Page " + (page + 1) + " / " + pages + " (" + totalRows.toLocaleString("en-IN") + " products)";
+      $("prevBtn").disabled = page === 0;
+      $("nextBtn").disabled = page + 1 >= pages;
 
-      if (!products.length) {
+      if (!currentRows.length) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px;">कोई product नहीं है।</td></tr>';
         return;
       }
 
-      tbody.innerHTML = products.map(function(p) {
-        var priceHtml = p.price
-          ? '<span class="price-tag">₹' + p.price.toLocaleString("en-IN") + '</span>'
+      tbody.innerHTML = currentRows.map(function (p) {
+        var priceHtml = p.price != null
+          ? '<span class="price-tag">₹' + Number(p.price).toLocaleString("en-IN") + '</span>'
           : '<span class="no-price">Set नहीं</span>';
-
-        var linkHtml = p.amazonLink
-          ? '<a href="' + p.amazonLink + '" target="_blank">Link ✓</a>'
-          : '<span class="no-price">नहीं है</span>';
+        var links = [];
+        var az = safeUrl(p.amazonLink), fk = safeUrl(p.flipkartLink);
+        if (az) links.push('<a href="' + escapeHTML(az) + '" target="_blank" rel="noopener">Amazon ✓</a>');
+        if (fk) links.push('<a href="' + escapeHTML(fk) + '" target="_blank" rel="noopener">Flipkart ✓</a>');
+        var linkHtml = links.length ? links.join("<br>") : '<span class="no-price">नहीं है</span>';
 
         return '<tr>'
-          + '<td>' + p.image + ' <strong>' + p.name + '</strong></td>'
-          + '<td><span class="badge">' + p.category + '</span></td>'
+          + '<td>' + escapeHTML(p.image) + ' <strong>' + escapeHTML(p.name) + '</strong></td>'
+          + '<td><span class="badge">' + escapeHTML(p.category) + '</span></td>'
           + '<td>' + priceHtml + '</td>'
           + '<td class="link-cell">' + linkHtml + '</td>'
           + '<td><div class="td-actions">'
-          + '<button class="btn-edit" onclick="openEdit(' + p.id + ')">✏️ Edit</button>'
-          + '<button class="btn btn-danger" onclick="deleteProduct(' + p.id + ')">🗑️</button>'
-          + '</div></td>'
-          + '</tr>';
+          + '<button class="btn-edit" data-edit="' + p.id + '">✏️ Edit</button>'
+          + '<button class="btn btn-danger" data-del="' + p.id + '">🗑️</button>'
+          + '</div></td></tr>';
       }).join("");
     }
 
-    // =====================
-    // Stats
-    // =====================
-    function updateStats() {
-      var products = getProducts();
-      document.getElementById("statTotal").textContent = products.length;
-      document.getElementById("statWithPrice").textContent = products.filter(function(p) { return p.price; }).length;
-      document.getElementById("statWithLink").textContent = products.filter(function(p) { return p.amazonLink; }).length;
+    // ---------- Add ----------
+    function readForm(prefix) {
+      return {
+        name: $(prefix + "Name").value.trim(),
+        category: $(prefix + "Category").value,
+        price: $(prefix + "Price").value,
+        image: $(prefix + "Image").value.trim() || "📱",
+        description: $(prefix + "Description").value.trim(),
+        amazonLink: $(prefix + "AmazonLink").value.trim(),
+        flipkartLink: $(prefix + "FlipkartLink").value.trim(),
+        searchTerms: $(prefix + "SearchTerms").value.trim()
+      };
     }
 
-    // =====================
-    // Export / Import
-    // =====================
-    function exportData() {
-      var data = JSON.stringify(getProducts(), null, 2);
-      var blob = new Blob([data], { type: "application/json" });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement("a");
-      a.href = url;
-      a.download = "pricenazar-backup.json";
-      a.click();
-      showToast("Backup download हो गया! ✅");
+    function addProduct() {
+      var product = readForm("new");
+      if (!product.name) { showToast("Product Name ज़रूरी है!", true); return; }
+      $("addBtn").disabled = true;
+      api("add", { product: product }).then(function () {
+        clearForm();
+        page = 0; listQuery = ""; $("listSearch").value = "";
+        loadList(); loadStats();
+        showToast("Product add हो गया! ✅");
+      }).catch(function (err) { showToast(err.message, true); })
+        .then(function () { $("addBtn").disabled = false; });
     }
 
-    function importData(event) {
+    function clearForm() {
+      ["newName", "newPrice", "newDescription", "newAmazonLink", "newFlipkartLink", "newSearchTerms"].forEach(function (id) { $(id).value = ""; });
+      $("newImage").value = "📱";
+    }
+
+    // ---------- Delete ----------
+    function deleteProduct(id) {
+      if (!confirm("यह product delete करना चाहते हैं?")) return;
+      api("delete", { id: id }).then(function () {
+        loadList(); loadStats();
+        showToast("Product delete हो गया!");
+      }).catch(function (err) { showToast(err.message, true); });
+    }
+
+    // ---------- Edit ----------
+    function openEdit(id) {
+      var p = currentRows.find(function (r) { return r.id === id; });
+      if (!p) return;
+      var sel = $("editCategory");
+      if (CATEGORIES.indexOf(p.category) === -1) {
+        sel.innerHTML += '<option value="' + escapeHTML(p.category) + '">' + escapeHTML(p.category) + '</option>';
+      }
+      $("editId").value = id;
+      $("editName").value = p.name;
+      sel.value = p.category;
+      $("editPrice").value = p.price != null ? p.price : "";
+      $("editImage").value = p.image;
+      $("editDescription").value = p.description;
+      $("editAmazonLink").value = p.amazonLink;
+      $("editFlipkartLink").value = p.flipkartLink;
+      $("editSearchTerms").value = p.searchTerms;
+      $("editModal").style.display = "flex";
+    }
+
+    function saveEdit() {
+      var id = Number($("editId").value);
+      var product = readForm("edit");
+      if (!product.name) { showToast("Product Name ज़रूरी है!", true); return; }
+      api("update", { id: id, product: product }).then(function () {
+        closeModal();
+        loadList(); loadStats();
+        showToast("Product update हो गया! ✅");
+      }).catch(function (err) { showToast(err.message, true); });
+    }
+
+    function closeModal() {
+      $("editModal").style.display = "none";
+      fillCategories($("editCategory"));
+    }
+
+    // ---------- Bulk import ----------
+    function parseCSV(text) {
+      var rows = [], row = [], field = "", inQ = false;
+      text = text.replace(/^\uFEFF/, "");
+      for (var i = 0; i < text.length; i++) {
+        var c = text[i];
+        if (inQ) {
+          if (c === '"') {
+            if (text[i + 1] === '"') { field += '"'; i++; } else { inQ = false; }
+          } else { field += c; }
+        } else if (c === '"') {
+          inQ = true;
+        } else if (c === ",") {
+          row.push(field); field = "";
+        } else if (c === "\n" || c === "\r") {
+          if (c === "\r" && text[i + 1] === "\n") i++;
+          row.push(field); field = "";
+          if (row.length > 1 || row[0] !== "") rows.push(row);
+          row = [];
+        } else { field += c; }
+      }
+      if (field !== "" || row.length) { row.push(field); rows.push(row); }
+      return rows;
+    }
+
+    function csvToProducts(text) {
+      var rows = parseCSV(text);
+      if (rows.length < 2) return [];
+      var alias = {
+        name: "name", title: "name", productname: "name",
+        category: "category", description: "description", price: "price", image: "image", emoji: "image",
+        amazonlink: "amazonLink", amazon: "amazonLink",
+        flipkartlink: "flipkartLink", flipkart: "flipkartLink",
+        searchterms: "searchTerms", keywords: "searchTerms", id: "id"
+      };
+      var keys = rows[0].map(function (h) { return alias[String(h).toLowerCase().replace(/[^a-z]/g, "")] || null; });
+      return rows.slice(1).map(function (r) {
+        var o = {};
+        keys.forEach(function (k, i) { if (k && r[i] !== undefined) o[k] = r[i].trim(); });
+        return o;
+      }).filter(function (o) { return o.name; });
+    }
+
+    function onFileChosen(event) {
       var file = event.target.files[0];
+      importItems = [];
+      $("importBtn").disabled = true;
       if (!file) return;
       var reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
         try {
-          var data = JSON.parse(e.target.result);
-          if (!Array.isArray(data)) throw new Error("Invalid");
-          saveProducts(data);
-          renderTable();
-          updateStats();
-          showToast("Backup restore हो गया! ✅");
-        } catch(err) {
-          showToast("गलत file! JSON file चाहिए।", true);
+          var text = String(e.target.result);
+          var items;
+          if (/\.json$/i.test(file.name) || text.trim().charAt(0) === "[" || text.trim().charAt(0) === "{") {
+            var data = JSON.parse(text);
+            items = Array.isArray(data) ? data : (Array.isArray(data.products) ? data.products : null);
+            if (!items) throw new Error("bad");
+          } else {
+            items = csvToProducts(text);
+          }
+          items = items.filter(function (p) { return p && String(p.name || "").trim(); });
+          if (!items.length) throw new Error("empty");
+          importItems = items;
+          $("importStatus").textContent = items.length.toLocaleString("en-IN") + " products मिले। 'Import शुरू करें' दबाएँ।";
+          $("importBtn").disabled = false;
+        } catch (err) {
+          $("importStatus").textContent = "फ़ाइल पढ़ नहीं पाया। सही CSV या JSON चुनें।";
         }
       };
       reader.readAsText(file);
     }
 
-    // =====================
-    // Toast
-    // =====================
+    async function runImport() {
+      if (!importItems.length) return;
+      var withIds = importItems.some(function (p) { return p.id; });
+      var msg = importItems.length + " products import करने हैं।" + (withIds ? "\n\nफ़ाइल में id हैं, इसलिए उसी id के पुराने products बदल जाएँगे।" : "") + "\n\nजारी रखें?";
+      if (!confirm(msg)) return;
+
+      $("importBtn").disabled = true;
+      var CHUNK = 500, saved = 0, skipped = 0;
+      try {
+        for (var i = 0; i < importItems.length; i += CHUNK) {
+          var part = importItems.slice(i, i + CHUNK);
+          var r = await api("bulk", { products: part });
+          saved += r.saved; skipped += r.skipped;
+          $("importStatus").textContent = "Import हो रहा है... " + Math.min(i + CHUNK, importItems.length).toLocaleString("en-IN") + " / " + importItems.length.toLocaleString("en-IN");
+        }
+        $("importStatus").textContent = "✅ " + saved.toLocaleString("en-IN") + " products save हुए" + (skipped ? " (" + skipped + " बिना नाम के छोड़े गए)" : "") + "।";
+        importItems = [];
+        $("importFile").value = "";
+        page = 0; listQuery = ""; $("listSearch").value = "";
+        loadList(); loadStats();
+      } catch (err) {
+        $("importStatus").textContent = "❌ रुक गया: " + err.message + " (" + saved + " products पहले save हो चुके हैं)";
+        $("importBtn").disabled = false;
+      }
+    }
+
+    function downloadTemplate() {
+      var csv = "name,category,description,price,image,amazonLink,flipkartLink,searchTerms\n"
+        + '"Samsung Galaxy S25 (Navy, 256 GB)",Smartphones,"Samsung smartphone, 256 GB",,📱,,https://dl.flipkart.com/...,"samsung galaxy s25 navy 256gb mobile phone"\n';
+      downloadBlob(csv, "pricenazar-template.csv", "text/csv;charset=utf-8");
+    }
+
+    function downloadBlob(content, name, type) {
+      var blob = new Blob([content], { type: type });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+
+    // ---------- Export ----------
+    async function exportData() {
+      $("exportBtn").disabled = true;
+      var all = [], offset = 0, total = 1;
+      try {
+        while (offset < total) {
+          var d = await api("list", { q: "", limit: 1000, offset: offset });
+          total = d.total;
+          all = all.concat(d.rows);
+          offset += 1000;
+          $("exportStatus").textContent = "Backup बन रहा है... " + all.length.toLocaleString("en-IN") + " / " + total.toLocaleString("en-IN");
+          if (!d.rows.length) break;
+        }
+        downloadBlob(JSON.stringify(all, null, 2), "pricenazar-backup.json", "application/json");
+        $("exportStatus").textContent = "✅ " + all.length.toLocaleString("en-IN") + " products का backup download हो गया।";
+      } catch (err) {
+        $("exportStatus").textContent = "❌ " + err.message;
+      }
+      $("exportBtn").disabled = false;
+    }
+
+    // ---------- Toast ----------
     function showToast(msg, isError) {
-      var toast = document.getElementById("toast");
+      var toast = $("toast");
       toast.textContent = msg;
       toast.style.background = isError ? "#dc2626" : "#16a34a";
       toast.style.display = "block";
-      setTimeout(function() { toast.style.display = "none"; }, 3000);
+      setTimeout(function () { toast.style.display = "none"; }, 3500);
+    }
+
+    // ---------- Wire up ----------
+    fillCategories($("newCategory"));
+    fillCategories($("editCategory"));
+
+    $("loginBtn").addEventListener("click", doLogin);
+    $("passwordInput").addEventListener("keydown", function (e) { if (e.key === "Enter") doLogin(); });
+    $("logoutBtn").addEventListener("click", doLogout);
+    $("addBtn").addEventListener("click", addProduct);
+    $("clearBtn").addEventListener("click", clearForm);
+    $("saveEditBtn").addEventListener("click", saveEdit);
+    $("cancelEditBtn").addEventListener("click", closeModal);
+    $("editModal").addEventListener("click", function (e) { if (e.target === this) closeModal(); });
+    $("importFile").addEventListener("change", onFileChosen);
+    $("importBtn").addEventListener("click", runImport);
+    $("templateBtn").addEventListener("click", downloadTemplate);
+    $("exportBtn").addEventListener("click", exportData);
+    $("prevBtn").addEventListener("click", function () { if (page > 0) { page--; loadList(); } });
+    $("nextBtn").addEventListener("click", function () { page++; loadList(); });
+    $("listSearch").addEventListener("input", function () {
+      clearTimeout(listTimer);
+      var v = this.value;
+      listTimer = setTimeout(function () { listQuery = v; page = 0; loadList(); }, 350);
+    });
+    $("productsTableBody").addEventListener("click", function (e) {
+      var edit = e.target.closest("[data-edit]");
+      if (edit) { openEdit(Number(edit.dataset.edit)); return; }
+      var del = e.target.closest("[data-del]");
+      if (del) deleteProduct(Number(del.dataset.del));
+    });
+
+    // Auto-login if password already entered in this tab
+    if (sessionStorage.getItem("pn_admin_pw")) {
+      api("login").then(showAdmin).catch(function () { sessionStorage.removeItem("pn_admin_pw"); });
     }
   </script>
 </body>
