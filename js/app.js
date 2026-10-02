@@ -211,7 +211,7 @@ function getSearchUrl(store, productName) {
 }
 
 function getProductById(id) {
-  return products.find(function(product) {
+  return getProducts().find(function(product) {
     return product.id === Number(id);
   });
 }
@@ -246,7 +246,7 @@ function createProductCard(product) {
     + '<button class="compare-btn ' + (isSelected ? "selected" : "") + '" data-compare-id="' + product.id + '" aria-pressed="' + (isSelected ? "true" : "false") + '">'
     + (isSelected ? "✓ Added to Compare" : "＋ Compare")
     + '</button>'
-    + '<button class="share-btn" data-share-name="' + product.name + '" data-share-amazon="' + (product.amazonLink || "") + '" data-share-flipkart="' + (product.flipkartLink || "") + '">📤 Share</button>'
+    + '<button class="share-btn" data-share-name="' + product.name + '" data-share-amazon="' + (product.amazonLink || "") + '" data-share-flipkart="' + (product.flipkartLink || "") + '">🔗 Share</button>'
     + '</div></article>';
 }
 
