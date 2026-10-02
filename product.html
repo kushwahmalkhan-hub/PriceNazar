@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Details - PriceNazar</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{background:#0f172a;color:white;font-family:sans-serif;margin:0;padding:20px}
+.card{background:#1e293b;padding:20px;border-radius:16px;margin-top:20px}
+.spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:#0f172a;padding:16px;border-radius:12px;margin:16px 0}
+.btn{padding:14px;border-radius:10px;font-weight:bold;text-align:center;text-decoration:none;display:block;flex:1}
+.amazon{background:#FF9900;color:black}
+.flipkart{background:#2874F0;color:white}
+</style>
+</head>
+<body>
+<a href="index.html" style="color:#38bdf8;text-decoration:none"> <- Back to Home</a>
+<div id="productBox">Loading...</div>
+<script>
+const SUPABASE_URL = "YAHAN_SUPABASE_URL_DALO";
+const SUPABASE_KEY = "YAHAN_SUPABASE_ANON_KEY_DALO";
+const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+async function load(){
+  const id = new URLSearchParams(window.location.search).get(\'id\');
+  const {data:p} = await supa.from(\'products\').select(\'*\').eq(\'id\', id).single();
+  if(!p){ document.getElementById(\'productBox\').innerHTML="Product nahi mila"; return; }
+  document.getElementById(\'productBox\').innerHTML = `
+    <div class="card">
+      <img src="${p.image||\'\'}" style="width:200px;margin:auto;display:block">
+      <h1>${p.name}</h1>
+      <p style="color:gold">⭐ ${p.rating||\'4.5\'} Rating</p>
+      <div class="spec-grid">
+        <p><b>Display:</b> ${p.display||\'-\'}</p>
+        <p><b>Processor:</b> ${p.processor||\'-\'}</p>
+        <p><b>RAM:</b> ${p.ram||\'-\'}</p>
+        <p><b>Storage:</b> ${p.storage||\'-\'}</p>
+        <p><b>Camera:</b> ${p.camera||\'-\'}</p>
+        <p><b>Battery:</b> ${p.battery||\'-\'}</p>
+        <p><b>Charging:</b> ${p.charging||\'-\'}</p>
+      </div>
+      <h2 style="color:#22c55e">₹${(p.current_price||0).toLocaleString(\'en-IN\')} <del style="color:gray;font-size:16px">₹${(p.original_price||0).toLocaleString(\'en-IN\')}</del></h2>
+      <div id="priceDiff" style="color:#22c55e;font-weight:bold;margin:10px 0"></div>
+      <canvas id="priceChart" height="120"></canvas>
+      <div style="display:flex;gap:12px;margin-top:20px">
+        <a href="${p.amazon_link||\'#\'}" target="_blank" class="btn amazon">Amazon पर देखें</a>
+        <a href="${p.flipkart_link||\'#\'}" target="_blank" class="btn flipkart">Flipkart पर देखें</a>
+      </div>
+    </div>`;
+  const {data:history} = await supa.from(\'price_history\').select(\'*\').eq(\'product_id\', p.id).order(\'created_at\');
+  if(history && history.length>1){
+    document.getElementById(\'priceDiff\').innerText = `पहले ₹${history[0].price} → अब ₹${history[history.length-1].price}`;
+    new Chart(document.getElementById(\'priceChart\'), {type:\'line\', data:{labels:history.map(h=> new Date(h.created_at).toLocaleDateString(\'en-IN\')), datasets:[{label:\'Price\', data:history.map(h=>h.price), borderColor:\'#38bdf8\', tension:0.3}]}, options:{plugins:{legend:{display:false}}}});
+  }
+}
+load();
+</script>
+</body>
+</html>
