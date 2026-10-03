@@ -10,7 +10,11 @@ var SUPABASE_ANON_KEY = "sb_publishable_ib6fxqUCmPPGcJZE0Yqo3A_9Y8pUSXM";
 /* ---------------------------------------------------------------- */
 
 var PAGE_SIZE = 24;
-var SELECT_COLS = "id,name,category,description,price,image,amazon_link,flipkart_link,search_terms";
+var SELECT_COLS = "id,name,category,description,price,image,amazon_link,flipkart_link,search_terms,specs,rating";
+var SPEC_ROWS = [
+  ["display", "Display"], ["processor", "Processor"], ["ram", "RAM"], ["storage", "Storage"],
+  ["camera", "Camera"], ["battery", "Battery"], ["charging", "Charging"]
+];
 
 /* =========================================
    State
@@ -78,7 +82,9 @@ function mapRow(r) {
     image: r.image || "📦",
     amazonLink: r.amazon_link || "",
     flipkartLink: r.flipkart_link || "",
-    searchTerms: r.search_terms || ""
+    searchTerms: r.search_terms || "",
+    specs: r.specs && typeof r.specs === "object" ? r.specs : {},
+    rating: r.rating === null || r.rating === undefined ? null : Number(r.rating)
   };
 }
 
@@ -358,11 +364,29 @@ function renderComparison() {
       + '<button class="compare-remove-btn" data-remove-id="' + p.id + '">Remove</button></th>';
   }).join("");
 
+  // Rating and spec rows appear only when at least one selected product has that info
+  var ratingRow = "";
+  if (selected.some(function (p) { return p.rating !== null && p.rating !== undefined; })) {
+    ratingRow = '<tr><th>Rating</th>' + selected.map(function (p) {
+      return '<td>' + (p.rating !== null && p.rating !== undefined ? '★ ' + Number(p.rating).toFixed(1) + ' / 5' : '—') + '</td>';
+    }).join("") + '</tr>';
+  }
+
+  var specRowsHtml = SPEC_ROWS.filter(function (spec) {
+    return selected.some(function (p) { return p.specs && p.specs[spec[0]]; });
+  }).map(function (spec) {
+    return '<tr><th>' + spec[1] + '</th>' + selected.map(function (p) {
+      return '<td>' + (p.specs && p.specs[spec[0]] ? escapeHTML(p.specs[spec[0]]) : '—') + '</td>';
+    }).join("") + '</tr>';
+  }).join("");
+
   compareList.innerHTML = '<div class="comparison-table-wrap"><table class="comparison-table">'
     + '<thead><tr><th>Features</th>' + headers + '</tr></thead>'
     + '<tbody>'
     + '<tr><th>Category</th>' + rows + '</tr>'
     + '<tr><th>Price</th>' + priceRows + '</tr>'
+    + ratingRow
+    + specRowsHtml
     + '<tr><th>Description</th>' + descRows + '</tr>'
     + '</tbody></table></div>';
 }
