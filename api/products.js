@@ -4,7 +4,8 @@
 import crypto from "crypto";
 
 const MAX_BULK = 1000;
-const COLS = "id,name,category,description,price,image,amazon_link,flipkart_link,search_terms";
+const COLS = "id,name,category,description,price,image,amazon_link,flipkart_link,search_terms,specs,rating";
+const SPEC_KEYS = ["display", "processor", "ram", "storage", "camera", "battery", "charging"];
 
 function safeEqual(a, b) {
   const ha = crypto.createHash("sha256").update(String(a)).digest();
@@ -16,6 +17,19 @@ function authHeaders(key, extra) {
   const h = { apikey: key, "Content-Type": "application/json", ...(extra || {}) };
   if (key.startsWith("eyJ")) h.Authorization = "Bearer " + key;
   return h;
+}
+
+function readSpecs(p) {
+  const obj = p.specs && typeof p.specs === "object" ? p.specs : null;
+  const src = obj || p;
+  let present = !!obj;
+  const out = {};
+  for (const k of SPEC_KEYS) {
+    if (src[k] !== undefined) present = true;
+    const v = String(src[k] == null ? "" : src[k]).trim().slice(0, 300);
+    if (v) out[k] = v;
+  }
+  return present ? out : null;
 }
 
 function clean(p) {
@@ -40,6 +54,12 @@ function clean(p) {
         .trim()
         .slice(0, 1000) || name.toLowerCase(),
   };
+  const specs = readSpecs(p);
+  if (specs) row.specs = specs;
+  if (p.rating !== undefined) {
+    const r = p.rating === "" || p.rating == null ? null : Number(p.rating);
+    row.rating = Number.isFinite(r) && r >= 0 && r <= 5 ? Math.round(r * 10) / 10 : null;
+  }
   const id = Number(p.id);
   if (Number.isInteger(id) && id > 0) row.id = id;
   return row;
@@ -56,7 +76,19 @@ function mapOut(r) {
     amazonLink: r.amazon_link || "",
     flipkartLink: r.flipkart_link || "",
     searchTerms: r.search_terms || "",
+    specs: r.specs && typeof r.specs === "object" ? r.specs : {},
+    rating: r.rating == null ? null : Number(r.rating),
   };
+}
+
+function groupBySignature(rows) {
+  const groups = new Map();
+  rows.forEach((r) => {
+    const sig = Object.keys(r).sort().join("|");
+    if (!groups.has(sig)) groups.set(sig, []);
+    groups.get(sig).push(r);
+  });
+  return Array.from(groups.values());
 }
 
 function searchFilters(q) {
@@ -181,11 +213,15 @@ export default async function handler(req, res) {
         });
 
         if (byId.size) {
-          await sb("POST", base + "?on_conflict=id", Array.from(byId.values()), "resolution=merge-duplicates,return=minimal");
+          for (const group of groupBySignature(Array.from(byId.values()))) {
+            await sb("POST", base + "?on_conflict=id", group, "resolution=merge-duplicates,return=minimal");
+          }
           await sb("POST", root + "/rpc/sync_products_seq", {});
         }
         if (noId.length) {
-          await sb("POST", base, noId, "return=minimal");
+          for (const group of groupBySignature(noId)) {
+            await sb("POST", base, group, "return=minimal");
+          }
         }
         return res.status(200).json({ ok: true, saved: byId.size + noId.length, skipped });
       }
