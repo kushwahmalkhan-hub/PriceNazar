@@ -103,13 +103,14 @@ function createProductCard(product) {
   var flipkartHref = safeUrl(product.flipkartLink) || getSearchUrl("flipkart", product.name);
 
   return '<article class="product-card">'
-    + '<div class="product-image"><span>' + escapeHTML(product.image) + '</span></div>'
+    + '<a href="product.html?id=' + product.id + '" style="text-decoration:none;color:inherit;display:block;"><div class="product-image"><span>' + escapeHTML(product.image) + '</span></div></a>'
     + '<div class="product-info">'
     + '<span class="product-category">' + escapeHTML(product.category) + '</span>'
-    + '<h3 class="product-name">' + escapeHTML(product.name) + '</h3>'
+    + '<h3 class="product-name"><a href="product.html?id=' + product.id + '" style="color:inherit;text-decoration:none;">' + escapeHTML(product.name) + '</a></h3>'
     + '<p class="product-description">' + escapeHTML(product.description) + '</p>'
     + '<div class="product-price">' + formatPrice(product.price) + '</div>'
     + '<p class="price-note">Price may vary by store. Check the retailer for the latest price.</p>'
+    + '<a href="product.html?id=' + product.id + '" style="display:inline-block;margin:4px 0 8px;font-size:13px;font-weight:700;color:#2563eb;text-decoration:none;">📊 Details &amp; Price History</a>'
     + '<div class="product-actions">'
     + '<a class="primary-btn store-link" href="' + escapeHTML(amazonHref) + '" target="_blank" rel="noopener noreferrer">Amazon</a>'
     + '<a class="secondary-btn store-link" href="' + escapeHTML(flipkartHref) + '" target="_blank" rel="noopener noreferrer">Flipkart</a>'
