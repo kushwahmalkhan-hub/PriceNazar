@@ -161,6 +161,38 @@
             <label>Flipkart Link</label>
             <input type="url" id="newFlipkartLink" placeholder="https://dl.flipkart.com/...">
           </div>
+          <div class="form-group">
+            <label>Display / Screen</label>
+            <input type="text" id="newDisplay" placeholder="जैसे: 6.7" AMOLED 120Hz">
+          </div>
+          <div class="form-group">
+            <label>Processor</label>
+            <input type="text" id="newProcessor" placeholder="जैसे: Snapdragon 8 Gen 3">
+          </div>
+          <div class="form-group">
+            <label>RAM</label>
+            <input type="text" id="newRam" placeholder="जैसे: 12 GB">
+          </div>
+          <div class="form-group">
+            <label>Storage</label>
+            <input type="text" id="newStorage" placeholder="जैसे: 256 GB">
+          </div>
+          <div class="form-group">
+            <label>Camera</label>
+            <input type="text" id="newCamera" placeholder="जैसे: 50MP + 12MP + 10MP">
+          </div>
+          <div class="form-group">
+            <label>Battery</label>
+            <input type="text" id="newBattery" placeholder="जैसे: 5000 mAh">
+          </div>
+          <div class="form-group">
+            <label>Charging</label>
+            <input type="text" id="newCharging" placeholder="जैसे: 45W fast charging">
+          </div>
+          <div class="form-group">
+            <label>Rating (0 से 5)</label>
+            <input type="number" step="0.1" min="0" max="5" id="newRating" placeholder="जैसे: 4.3">
+          </div>
           <div class="form-group full">
             <label>Search Terms (optional)</label>
             <input type="text" id="newSearchTerms" placeholder="samsung galaxy s24 samsung phone mobile">
@@ -177,7 +209,8 @@
         <h2>📥 बहुत सारे Products एक साथ (Bulk Import)</h2>
         <p class="hint">
           CSV या JSON फ़ाइल चुनें। पुरानी Backup JSON फ़ाइल भी यहीं Restore होती है।<br>
-          • <strong>CSV</strong> में पहली लाइन header होनी चाहिए: name, category, description, price, image, amazonLink, flipkartLink, searchTerms (सिर्फ़ name ज़रूरी है)।<br>
+          • <strong>CSV</strong> में पहली लाइन header होनी चाहिए: name, category, description, price, image, amazonLink, flipkartLink, searchTerms, display, processor, ram, storage, camera, battery, charging, rating (सिर्फ़ name ज़रूरी है)।<br>
+          • <strong>Specs भरने के लिए:</strong> CSV में <strong>id</strong> के साथ सिर्फ़ ये कॉलम रखें: id, display, processor, ram, storage, camera, battery, charging, rating। उसी id के प्रोडक्ट में specs जुड़ जाएँगे, बाकी जानकारी वैसी ही रहेगी।<br>
           • <strong>id के बिना</strong> फ़ाइल हर बार नए products जोड़ती है, इसलिए एक ही फ़ाइल दो बार import न करें।<br>
           • <strong>id वाली</strong> फ़ाइल (Backup) उसी id के पुराने product को बदल देती है।
         </p>
@@ -237,6 +270,14 @@
         <div class="form-group full"><label>Description</label><input type="text" id="editDescription"></div>
         <div class="form-group full"><label>Amazon Affiliate Link</label><input type="url" id="editAmazonLink"></div>
         <div class="form-group full"><label>Flipkart Link</label><input type="url" id="editFlipkartLink"></div>
+        <div class="form-group"><label>Display / Screen</label><input type="text" id="editDisplay"></div>
+        <div class="form-group"><label>Processor</label><input type="text" id="editProcessor"></div>
+        <div class="form-group"><label>RAM</label><input type="text" id="editRam"></div>
+        <div class="form-group"><label>Storage</label><input type="text" id="editStorage"></div>
+        <div class="form-group"><label>Camera</label><input type="text" id="editCamera"></div>
+        <div class="form-group"><label>Battery</label><input type="text" id="editBattery"></div>
+        <div class="form-group"><label>Charging</label><input type="text" id="editCharging"></div>
+        <div class="form-group"><label>Rating (0 से 5)</label><input type="number" step="0.1" min="0" max="5" id="editRating"></div>
         <div class="form-group full"><label>Search Terms</label><input type="text" id="editSearchTerms"></div>
       </div>
       <div class="form-actions">
@@ -388,7 +429,17 @@
         description: $(prefix + "Description").value.trim(),
         amazonLink: $(prefix + "AmazonLink").value.trim(),
         flipkartLink: $(prefix + "FlipkartLink").value.trim(),
-        searchTerms: $(prefix + "SearchTerms").value.trim()
+        searchTerms: $(prefix + "SearchTerms").value.trim(),
+        specs: {
+          display: $(prefix + "Display").value.trim(),
+          processor: $(prefix + "Processor").value.trim(),
+          ram: $(prefix + "Ram").value.trim(),
+          storage: $(prefix + "Storage").value.trim(),
+          camera: $(prefix + "Camera").value.trim(),
+          battery: $(prefix + "Battery").value.trim(),
+          charging: $(prefix + "Charging").value.trim()
+        },
+        rating: $(prefix + "Rating").value
       };
     }
 
@@ -406,7 +457,7 @@
     }
 
     function clearForm() {
-      ["newName", "newPrice", "newDescription", "newAmazonLink", "newFlipkartLink", "newSearchTerms"].forEach(function (id) { $(id).value = ""; });
+      ["newName", "newPrice", "newDescription", "newAmazonLink", "newFlipkartLink", "newSearchTerms", "newDisplay", "newProcessor", "newRam", "newStorage", "newCamera", "newBattery", "newCharging", "newRating"].forEach(function (id) { $(id).value = ""; });
       $("newImage").value = "📱";
     }
 
@@ -436,6 +487,15 @@
       $("editAmazonLink").value = p.amazonLink;
       $("editFlipkartLink").value = p.flipkartLink;
       $("editSearchTerms").value = p.searchTerms;
+      var sp = p.specs || {};
+      $("editDisplay").value = sp.display || "";
+      $("editProcessor").value = sp.processor || "";
+      $("editRam").value = sp.ram || "";
+      $("editStorage").value = sp.storage || "";
+      $("editCamera").value = sp.camera || "";
+      $("editBattery").value = sp.battery || "";
+      $("editCharging").value = sp.charging || "";
+      $("editRating").value = p.rating != null ? p.rating : "";
       $("editModal").style.display = "flex";
     }
 
@@ -488,7 +548,10 @@
         category: "category", description: "description", price: "price", image: "image", emoji: "image",
         amazonlink: "amazonLink", amazon: "amazonLink",
         flipkartlink: "flipkartLink", flipkart: "flipkartLink",
-        searchterms: "searchTerms", keywords: "searchTerms", id: "id"
+        searchterms: "searchTerms", keywords: "searchTerms", id: "id",
+        display: "display", screen: "display", processor: "processor", chipset: "processor", cpu: "processor",
+        ram: "ram", storage: "storage", rom: "storage", camera: "camera", battery: "battery",
+        charging: "charging", rating: "rating"
       };
       var keys = rows[0].map(function (h) { return alias[String(h).toLowerCase().replace(/[^a-z]/g, "")] || null; });
       return rows.slice(1).map(function (r) {
@@ -554,8 +617,8 @@
     }
 
     function downloadTemplate() {
-      var csv = "name,category,description,price,image,amazonLink,flipkartLink,searchTerms\n"
-        + '"Samsung Galaxy S25 (Navy, 256 GB)",Smartphones,"Samsung smartphone, 256 GB",,📱,,https://dl.flipkart.com/...,"samsung galaxy s25 navy 256gb mobile phone"\n';
+      var csv = "name,category,description,price,image,amazonLink,flipkartLink,searchTerms,display,processor,ram,storage,camera,battery,charging,rating\n"
+        + '"Samsung Galaxy S25 (Navy, 256 GB)",Smartphones,"Samsung smartphone, 256 GB",,📱,,https://dl.flipkart.com/...,"samsung galaxy s25 navy 256gb mobile phone","6.2 inch AMOLED",Snapdragon 8 Elite,12 GB,256 GB,"50MP + 12MP + 10MP",4000 mAh,25W,4.3\n';
       downloadBlob(csv, "pricenazar-template.csv", "text/csv;charset=utf-8");
     }
 
